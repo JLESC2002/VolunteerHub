@@ -1,0 +1,132 @@
+/* Page Layout */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f8fb;
+    margin: 0;
+    padding: 20px;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Styled Table */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table thead tr {
+    background-color: #007BFF;
+    color: white;
+    text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 10px;
+    vertical-align: top;
+}
+
+.styled-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.styled-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+button,
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-disabled {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.btn-primary { background-color: #007BFF; color: white; }
+.btn-primary:hover { background-color: #0056b3; }
+
+.btn-success { background-color: #28a745; color: white; }
+.btn-success:hover { background-color: #218838; }
+
+.btn-danger { background-color: #dc3545; color: white; }
+.btn-danger:hover { background-color: #c82333; }
+
+.btn-disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+/* ===============================
+   Task Progress Dropdown Styling
+   =============================== */
+.styled-table select {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover & focus states */
+.styled-table select:hover {
+    border-color: #888;
+    background-color: #fff;
+}
+.styled-table select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 3px rgba(0,123,255,0.4);
+}
+
+/* Progress-specific colors */
+.styled-table select option[value="Not Started"] {
+    background-color: #fbeaea; /* light red tint */
+}
+.styled-table select option[value="In Progress"] {
+    background-color: #fff7e0; /* light yellow tint */
+}
+.styled-table select option[value="Completed"] {
+    background-color: #e6f7ea; /* light green tint */
+}

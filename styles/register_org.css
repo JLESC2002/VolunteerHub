@@ -1,0 +1,53 @@
+.auth-container {
+  max-width: 550px;
+  margin: 50px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.section-title {
+  text-align: center;
+  font-size: 1.6rem;
+  color: #1e3a8a;
+  margin-bottom: 20px;
+}
+
+.form-card label {
+  font-weight: 600;
+  display: block;
+  margin: 10px 0 5px;
+  color: #374151;
+}
+
+.form-card input,
+.form-card textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, #2563eb, #1e40af);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}

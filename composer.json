@@ -1,0 +1,18 @@
+{
+    "name": "sneyp/volunteer-hub",
+    "description": "website for volunteers",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Sneyp\\VolunteerHub\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "John Lester Chua"
+        }
+    ],
+    "require": {
+        "paragonie/password_compat": "^1.0"
+    }
+}

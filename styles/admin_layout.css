@@ -1,0 +1,220 @@
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* 🌟 Topbar */
+.topbar {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 1002;
+}
+
+/* ☰ Hamburger Button */
+#toggleSidebar {
+  border: none;
+  font-size: 1.2rem;
+  background: none;
+  color: #333;
+  cursor: pointer;
+}
+#toggleSidebar:hover {
+  background: #f0f0f0;
+  border-radius: 6px;
+}
+
+/* 📚 Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 260px;
+  height: 100%;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  z-index: 1100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+.sidebar-header {
+  border-bottom: 1px solid #eee;
+}
+
+.sidebar .nav-link {
+  color: #333;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  background: #007bff;
+  color: #fff;
+}
+
+/* 📄 Page Content */
+.page-content {
+  padding: 30px;
+  min-height: calc(100vh - 60px);
+  background: #f8fafc;
+  transition: margin-left 0.3s ease;
+}
+
+/* 🦶 Footer */
+.footer {
+  font-size: 0.9rem;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 📱 Mobile Overlay */
+@media (max-width: 992px) {
+  .sidebar {
+    width: 240px;
+  }
+}
+
+/* Overlay when sidebar is open */
+.sidebar.active::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 260px;
+  width: calc(100vw - 260px);
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+/* --- Manage Events Page --- */
+.manage-events-page {
+  padding-top: 1rem;
+}
+
+.manage-events-page .card {
+  border-radius: 12px;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manage-events-page .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.manage-events-page .table thead th {
+  font-weight: 600;
+  color: #333;
+  background: #f8fafc;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.manage-events-page .table td {
+  vertical-align: middle;
+}
+
+.manage-events-page .badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.65em;
+  border-radius: 6px;
+}
+
+.manage-events-page .btn-group .btn {
+  margin: 0 2px;
+}
+
+.manage-events-page .btn-outline-primary:hover {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.manage-events-page .btn-outline-danger:hover {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .manage-events-page .table th,
+  .manage-events-page .table td {
+    font-size: 0.9rem;
+  }
+}
+/* Container styling */
+.auth-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Section title */
+.section-title {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* Form layout */
+.form-card {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Labels */
+.form-card label {
+    font-weight: 600;
+    color: #555;
+}
+
+/* Inputs and textarea */
+.form-card input[type="text"],
+.form-card input[type="email"],
+.form-card textarea {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.form-card input:focus,
+.form-card textarea:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Submit button */
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}

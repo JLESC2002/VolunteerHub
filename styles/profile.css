@@ -1,0 +1,167 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f8fb;
+    margin: 0;
+    padding: 20px;
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.section-title {
+    font-size: 20px;
+    color: #333;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.card p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.card strong {
+    color: #000;
+}
+
+.no-data {
+    color: #888;
+    font-style: italic;
+}
+
+/* Base */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f8fb;
+    margin: 0;
+    padding: 20px;
+}
+
+.profile-container { max-width: 900px; margin: auto; }
+.section-title { font-size: 20px; color: #333; font-weight: 600; margin: 30px 0 15px; }
+
+.card {
+    background: #fff;
+    padding: 18px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+
+.card p { margin: 8px 0; color: #444; }
+.card strong { color: #111; }
+
+/* Buttons (same palette as admin pages) */
+button { border: none; border-radius: 6px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+.btn-primary { background:#007BFF; color:#fff; }
+.btn-primary:hover { background:#0056b3; }
+.btn-success { background:#28a745; color:#fff; }
+.btn-success:hover { background:#218838; }
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#5a6268; }
+
+/* Edit form layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+}
+.form-grid .grid-col-2 { grid-column: span 2; }
+
+.form-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: #333; }
+.form-grid input[type="text"],
+.form-grid input[type="number"] {
+    padding: 8px 10px;
+    border: 1px solid #d6d6d6;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.form-actions { margin-top: 12px; display: flex; gap: 8px; }
+
+/* Table styling */
+.table-wrapper {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.styled-table thead tr { background-color: #007BFF; color: #fff; text-align: left; }
+.styled-table th, .styled-table td { padding: 12px 14px; }
+.styled-table tbody tr { border-bottom: 1px solid #eee; }
+.styled-table tbody tr:nth-of-type(even) { background-color: #fafafa; }
+.styled-table tbody tr:hover { background-color: #f3f7ff; }
+
+.styled-table thead tr:hover, .styled-table thead th:hover {
+    background-color: inherit !important;
+    color: inherit !important;
+    cursor: default;
+}
+/* Two-column layout for donation info */
+.donation-info-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.donation-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.donation-section:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+}
+
+.donation-section h3 {
+  color: #0d6efd;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.donation-section label {
+  font-weight: 500;
+  color: #333;
+  margin-top: 8px;
+}
+
+.donation-section input,
+.donation-section textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.donation-section img {
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .donation-info-container {
+    grid-template-columns: 1fr;
+  }
+}

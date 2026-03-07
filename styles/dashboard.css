@@ -1,0 +1,118 @@
+/* General Layout */
+body {
+    background: linear-gradient(to bottom right, #f0f4ff, #ffffff);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Container */
+.dashboard-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 1.3rem;
+    margin: 30px 0 15px;
+    font-weight: 600;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Card-like Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    border: 1px solid #dbeafe;
+}
+
+/* Table Styling */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.styled-table thead tr {
+    background: linear-gradient(to right, #2563eb, #1e40af);
+    color: #fff;
+    text-align: left;
+    font-weight: 600;
+}
+
+.styled-table th, 
+.styled-table td {
+    padding: 14px 16px;
+    white-space: nowrap;
+}
+
+.styled-table tbody tr {
+    transition: background-color 0.25s ease;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f0f7ff;
+}
+
+.styled-table tbody tr:hover {
+    background-color: #e0ecff;
+}
+
+/* Rounded corners for first & last header cells */
+.styled-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+.styled-table thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+/* Emphasize numbers */
+.styled-table td:nth-child(1),
+.styled-table td:nth-child(3) {
+    font-weight: 600;
+    color: #1d4ed8;
+}
+
+/* Smooth Shadow Hover on Card */
+.table-wrapper:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+/* Chart Section */
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    border: 1px solid #dbeafe;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.chart-container canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.1rem;
+    }
+    .styled-table th, .styled-table td {
+        padding: 10px;
+    }
+    .chart-container {
+        padding: 15px;
+    }
+}
