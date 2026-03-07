@@ -53,7 +53,7 @@ $completedCount = (int)($counts['completed']?? 0);
 $cur = $conn->prepare("
     SELECT id, title, date, location, status FROM events
     WHERE created_by = ? AND status IN ('Open','Ongoing')
-    ORDER BY date ASC
+    ORDER BY date ASC LIMIT 5
 ");
 $cur->bind_param("i", $admin_id); $cur->execute();
 $currentEvents = $cur->get_result();
@@ -62,36 +62,36 @@ $currentEvents = $cur->get_result();
 $past = $conn->prepare("
     SELECT id, title, date, location FROM events
     WHERE created_by = ? AND status = 'Completed'
-    ORDER BY date DESC LIMIT 8
+    ORDER BY date DESC LIMIT 5
 ");
 $past->bind_param("i", $admin_id); $past->execute();
 $pastEvents = $past->get_result();
 
 // ── Volunteer donation history ────────────────────────────────────────────────
-$uid = $_SESSION['user_id'];
-$dq = $conn->prepare("
+// Query all donations received by the organization (censored donor info)
+$dq_all = $conn->prepare("
     SELECT 'GCash' AS method, amount, reference_number, status, created_at
-      FROM gcash_donations WHERE user_id=? AND organization_id=?
+      FROM gcash_donations WHERE organization_id=?
     UNION ALL
     SELECT 'Bank Transfer', amount, reference_number, status, created_at
-      FROM bank_payments WHERE user_id=? AND organization_id=?
+      FROM bank_payments WHERE organization_id=?
     ORDER BY created_at DESC
 ");
-$dq->bind_param("iiii", $uid, $organization_id, $uid, $organization_id);
-$dq->execute();
-$donations = $dq->get_result();
+$dq_all->bind_param("ii", $organization_id, $organization_id);
+$dq_all->execute();
+$donations_received = $dq_all->get_result();
 
-// ── Item donations ────────────────────────────────────────────────────────────
-$iq = $conn->prepare("
+// ── Item donations received ────────────────────────────────────────────────────
+$iq_all = $conn->prepare("
     SELECT item_category, item_description, quantity, dropoff_date, status, created_at
-    FROM dropoff_donations WHERE user_id=? AND organization_id=?
+    FROM dropoff_donations WHERE organization_id=?
     ORDER BY created_at DESC
 ");
-$iq->bind_param("ii", $uid, $organization_id);
-$iq->execute();
-$items = $iq->get_result();
+$iq_all->bind_param("i", $organization_id);
+$iq_all->execute();
+$items_received = $iq_all->get_result();
 
-$hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
+$hasDonationsReceived = ($donations_received->num_rows > 0 || $items_received->num_rows > 0);
 ?>
 
 <style>
@@ -129,7 +129,7 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
   display: flex; align-items: center; justify-content: center; font-size: 2rem;
 }
 .op-hero-info { flex: 1; min-width: 200px; padding-top: 14px; }
-.op-hero-name { font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0 0 6px; }
+.op-hero-name { font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0 0 12px; }
 .op-hero-meta { display: flex; flex-wrap: wrap; gap: 12px; }
 .op-meta-chip {
   font-size: .78rem; color: var(--text-muted);
@@ -281,15 +281,16 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
 
 /* ─── Donation buttons ────────────────────────────────── */
 .op-donate-row {
-  display: flex; gap: 10px; flex-wrap: wrap;
-  padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+  display: flex; gap: 12px; flex-wrap: wrap;
+  padding: 20px; padding-bottom: 12px;
 }
 .btn-don {
   display: inline-flex; align-items: center; gap: 7px;
   font-size: .82rem; font-weight: 600;
-  padding: 8px 16px; border-radius: var(--radius-sm);
+  padding: 10px 18px; border-radius: var(--radius-sm);
   border: none; cursor: pointer;
   transition: opacity var(--transition), transform var(--transition);
+  flex: 1; min-width: 140px; justify-content: center;
 }
 .btn-don:hover { opacity: .87; transform: translateY(-1px); }
 .btn-gcash   { background: #0d6dcd; color: #fff; }
@@ -483,7 +484,6 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
     <div class="op-card">
       <div class="op-card-header">
         <h2 class="op-card-title"><i class="fas fa-calendar-alt"></i> Upcoming Events</h2>
-        <span class="op-badge"><?= $upcomingEvents ?></span>
       </div>
       <?php if ($currentEvents->num_rows > 0): ?>
         <ul class="op-event-list">
@@ -519,15 +519,11 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
       <?php endif; ?>
     </div><!-- /left col -->
 
-    <!-- RIGHT: Past Events + Contact -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
-
-      <!-- Past Events -->
-      <div class="op-card">
-        <div class="op-card-header">
-          <h2 class="op-card-title"><i class="fas fa-history"></i> Past Events</h2>
-          <span class="op-badge"><?= $completedCount ?></span>
-        </div>
+    <!-- RIGHT: Past Events -->
+    <div class="op-card">
+      <div class="op-card-header">
+        <h2 class="op-card-title"><i class="fas fa-history"></i> Past Events</h2>
+      </div>
         <?php if ($pastEvents->num_rows > 0): ?>
           <ul class="op-event-list">
             <?php while ($ev = $pastEvents->fetch_assoc()): ?>
@@ -556,71 +552,9 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
         <?php endif; ?>
       </div>
 
-      <!-- Contact Info -->
-      <?php $hasContact = !empty($org['contact_email']) || !empty($org['contact_phone']) || !empty($org['location']) || !empty($org['facebook_link']); ?>
-      <?php if ($hasContact): ?>
-      <div class="op-card">
-        <div class="op-card-header">
-          <h2 class="op-card-title"><i class="fas fa-address-card"></i> Contact Info</h2>
-        </div>
-        <div class="op-contact-list">
-          <?php if (!empty($org['location'])): ?>
-            <div class="op-contact-row">
-              <div class="op-contact-icon"><i class="fas fa-map-marker-alt"></i></div>
-              <div>
-                <div class="op-contact-label">Location</div>
-                <div class="op-contact-val">
-                  <a href="https://maps.google.com/?q=<?= urlencode($org['location']) ?>"
-                     target="_blank" rel="noopener"
-                     style="color:var(--green-mid);text-decoration:none;">
-                    <?= htmlspecialchars($org['location']) ?>
-                  </a>
-                </div>
-              </div>
-            </div>
-          <?php endif; ?>
-          <?php if (!empty($org['contact_email'])): ?>
-            <div class="op-contact-row">
-              <div class="op-contact-icon"><i class="fas fa-envelope"></i></div>
-              <div>
-                <div class="op-contact-label">Email</div>
-                <div class="op-contact-val"><?= htmlspecialchars($org['contact_email']) ?></div>
-              </div>
-            </div>
-          <?php endif; ?>
-          <?php if (!empty($org['contact_phone'])): ?>
-            <div class="op-contact-row">
-              <div class="op-contact-icon"><i class="fas fa-phone"></i></div>
-              <div>
-                <div class="op-contact-label">Phone</div>
-                <div class="op-contact-val"><?= htmlspecialchars($org['contact_phone']) ?></div>
-              </div>
-            </div>
-          <?php endif; ?>
-          <?php if (!empty($org['facebook_link'])): ?>
-            <div class="op-contact-row">
-              <div class="op-contact-icon" style="background:#e7f0fd;color:#1877f2;"><i class="fab fa-facebook"></i></div>
-              <div>
-                <div class="op-contact-label">Facebook</div>
-                <div class="op-contact-val">
-                  <a href="<?= htmlspecialchars($org['facebook_link']) ?>"
-                     target="_blank" rel="noopener"
-                     style="color:var(--green-mid);text-decoration:none;font-weight:600;">
-                    Visit Facebook Page
-                  </a>
-                </div>
-              </div>
-            </div>
-          <?php endif; ?>
-        </div>
-      </div>
-      <?php endif; ?>
-
-    </div><!-- /right col stack -->
-
   </div><!-- /op-two-col -->
 
-  <!-- ══ SUPPORT / DONATE (full width) ════════════════════ -->
+  <!-- ══ SUPPORT / DONATE (full width) ════════════════════ --></div>
   <div class="op-full-row">
     <div class="op-card">
       <div class="op-card-header">
@@ -644,58 +578,50 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
         <?php endif; ?>
 
         <?php if (empty($org['gcash_qr']) && empty($org['gcash_number']) && empty($org['bank_name']) && empty($org['dropoff_location'])): ?>
-          <p style="font-size:.84rem;color:var(--text-muted);margin:4px 0;">
+          <div style="flex: 1; min-width: 140px; text-align: center; padding: 8px; font-size:.84rem; color:var(--text-muted);">
             <i class="fas fa-info-circle"></i> This organization has not set up donation methods yet.
-          </p>
+          </div>
         <?php endif; ?>
       </div>
     </div>
   </div>
 
-  <!-- ══ MY DONATION HISTORY (full width, tabbed) ═════════ -->
-  <?php if ($hasDonations): ?>
+  <!-- ══ DONATIONS RECEIVED (full width, tabbed) ════════ -->
+  <?php if ($hasDonationsReceived): ?>
   <div class="op-full-row">
     <div class="op-card">
       <div class="op-card-header">
-        <h2 class="op-card-title"><i class="fas fa-receipt"></i> My Donation History</h2>
+        <h2 class="op-card-title"><i class="fas fa-hands-helping"></i> Donations Received</h2>
       </div>
 
       <!-- Tabs -->
       <div class="op-tabs">
-        <button class="op-tab active" onclick="switchTab(this,'tab-money')">
+        <button class="op-tab active" onclick="switchTab(this,'tab-received-money')">
           <i class="fas fa-peso-sign"></i> Monetary
-          <?php if ($donations->num_rows > 0): ?>
-            <span class="op-badge" style="margin-left:5px;"><?= $donations->num_rows ?></span>
-          <?php endif; ?>
         </button>
-        <button class="op-tab" onclick="switchTab(this,'tab-items')">
-          <i class="fas fa-box"></i> Item Donations
-          <?php if ($items->num_rows > 0): ?>
-            <span class="op-badge" style="margin-left:5px;"><?= $items->num_rows ?></span>
-          <?php endif; ?>
+        <button class="op-tab" onclick="switchTab(this,'tab-received-items')">
+          <i class="fas fa-box"></i> Items
         </button>
       </div>
 
       <!-- Monetary tab -->
-      <div id="tab-money" class="op-tab-panel active">
-        <?php if ($donations->num_rows > 0): ?>
+      <div id="tab-received-money" class="op-tab-panel active">
+        <?php if ($donations_received->num_rows > 0): ?>
           <div style="overflow-x:auto;">
             <table class="op-don-table">
               <thead>
                 <tr>
                   <th>Method</th>
                   <th>Amount</th>
-                  <th>Reference #</th>
                   <th>Status</th>
                   <th>Date</th>
                 </tr>
               </thead>
               <tbody>
-                <?php while ($d = $donations->fetch_assoc()): ?>
+                <?php $donations_received->data_seek(0); while ($d = $donations_received->fetch_assoc()): ?>
                   <tr>
                     <td><?= htmlspecialchars($d['method']) ?></td>
                     <td class="amt">₱<?= number_format($d['amount'], 2) ?></td>
-                    <td style="font-family:monospace;font-size:.78rem;"><?= htmlspecialchars($d['reference_number']) ?></td>
                     <td>
                       <span class="s-pill <?= strtolower($d['status']) === 'approved' ? 's-open' : (strtolower($d['status']) === 'pending' ? 's-ongoing' : 's-completed') ?>">
                         <?= htmlspecialchars($d['status']) ?>
@@ -708,13 +634,13 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
             </table>
           </div>
         <?php else: ?>
-          <div class="op-empty"><i class="fas fa-receipt"></i><p>No monetary donations yet.</p></div>
+          <div class="op-empty"><i class="fas fa-receipt"></i><p>No monetary donations received yet.</p></div>
         <?php endif; ?>
       </div>
 
       <!-- Items tab -->
-      <div id="tab-items" class="op-tab-panel">
-        <?php if ($items->num_rows > 0): ?>
+      <div id="tab-received-items" class="op-tab-panel">
+        <?php if ($items_received->num_rows > 0): ?>
           <div style="overflow-x:auto;">
             <table class="op-don-table">
               <thead>
@@ -727,7 +653,7 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
                 </tr>
               </thead>
               <tbody>
-                <?php while ($it = $items->fetch_assoc()): ?>
+                <?php $items_received->data_seek(0); while ($it = $items_received->fetch_assoc()): ?>
                   <tr>
                     <td><?= htmlspecialchars($it['item_category']) ?></td>
                     <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -746,7 +672,7 @@ $hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
             </table>
           </div>
         <?php else: ?>
-          <div class="op-empty"><i class="fas fa-box-open"></i><p>No item donations yet.</p></div>
+          <div class="op-empty"><i class="fas fa-box-open"></i><p>No item donations received yet.</p></div>
         <?php endif; ?>
       </div>
 

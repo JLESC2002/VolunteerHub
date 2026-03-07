@@ -48,6 +48,31 @@ $eventsJoinedQ = $conn->prepare("SELECT COUNT(*) AS c FROM volunteer_application
 $eventsJoinedQ->bind_param("i", $user_id); $eventsJoinedQ->execute();
 $eventsJoined  = $eventsJoinedQ->get_result()->fetch_assoc()['c'] ?? 0;
 
+// Volunteer donation history
+$dq = $conn->prepare("
+    SELECT 'GCash' AS method, amount, reference_number, status, created_at
+      FROM gcash_donations WHERE user_id = ?
+    UNION ALL
+    SELECT 'Bank Transfer', amount, reference_number, status, created_at
+      FROM bank_payments WHERE user_id = ?
+    ORDER BY created_at DESC
+");
+$dq->bind_param("ii", $user_id, $user_id);
+$dq->execute();
+$donations = $dq->get_result();
+
+// Item donations
+$iq = $conn->prepare("
+    SELECT item_category, item_description, quantity, dropoff_date, status, created_at
+    FROM dropoff_donations WHERE user_id = ?
+    ORDER BY created_at DESC
+");
+$iq->bind_param("i", $user_id);
+$iq->execute();
+$items = $iq->get_result();
+
+$hasDonations = ($donations->num_rows > 0 || $items->num_rows > 0);
+
 // Handle profile update POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $gender  = $_POST['gender']       ?? null;
@@ -317,6 +342,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
   background: #dcfce7; color: #15803d;
 }
 
+/* Donation history tabs */
+.donation-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.donation-tab {
+  flex: 1; padding: 10px 8px; font-size: .78rem; font-weight: 600;
+  color: var(--text-muted); background: none; border: none;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.donation-tab.active { color: var(--green-dark); border-bottom-color: var(--green-mid); }
+.donation-tab-panel { display: none; }
+.donation-tab-panel.active { display: block; }
+
+/* Donation table */
+.don-table { width: 100%; border-collapse: collapse; font-size: .81rem; }
+.don-table th {
+  background: #e8f5ee; padding: 9px 14px;
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; color: #1a5c3a;
+  text-align: left; border-bottom: 1px solid var(--border);
+}
+.don-table td {
+  padding: 9px 14px; border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary); vertical-align: middle;
+}
+.don-table tr:last-child td { border-bottom: none; }
+.don-table tr:hover td { background: var(--green-soft); }
+.don-table .amt { font-weight: 700; color: var(--green-dark); }
+
+/* Empty state */
+.don-empty {
+  text-align: center; padding: 32px 20px; color: var(--text-muted);
+}
+.don-empty i { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+.don-empty p { font-size: .84rem; margin: 0; }
+
 #avatarInput { display: none; }
 </style>
 
@@ -564,6 +624,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
           </div>
         </div>
 
+        <!-- Donation History -->
+        <?php if ($hasDonations): ?>
+        <div class="pcard">
+          <div class="pcard-header">
+            <h3><i class="fas fa-receipt"></i> My Donation History</h3>
+          </div>
+
+          <!-- Tabs -->
+          <div class="donation-tabs">
+            <button type="button" class="donation-tab active" onclick="switchDonationTab(this,'tab-money')">
+              <i class="fas fa-peso-sign"></i> Monetary
+              <?php if ($donations->num_rows > 0): ?>
+                <span style="margin-left:5px;font-size:.65rem;background:#e8f5ee;color:#1a5c3a;padding:2px 6px;border-radius:3px;"><?= $donations->num_rows ?></span>
+              <?php endif; ?>
+            </button>
+            <button type="button" class="donation-tab" onclick="switchDonationTab(this,'tab-items')">
+              <i class="fas fa-box"></i> Items
+              <?php if ($items->num_rows > 0): ?>
+                <span style="margin-left:5px;font-size:.65rem;background:#e8f5ee;color:#1a5c3a;padding:2px 6px;border-radius:3px;"><?= $items->num_rows ?></span>
+              <?php endif; ?>
+            </button>
+          </div>
+
+          <!-- Monetary tab -->
+          <div id="tab-money" class="donation-tab-panel active">
+            <?php if ($donations->num_rows > 0): ?>
+              <div style="overflow-x:auto;">
+                <table class="don-table">
+                  <thead>
+                    <tr>
+                      <th>Method</th>
+                      <th>Amount</th>
+                      <th>Reference #</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php $donations->data_seek(0); while ($d = $donations->fetch_assoc()): ?>
+                      <tr>
+                        <td><?= htmlspecialchars($d['method']) ?></td>
+                        <td class="amt">₱<?= number_format($d['amount'], 2) ?></td>
+                        <td style="font-family:monospace;font-size:.78rem;"><?= htmlspecialchars($d['reference_number']) ?></td>
+                        <td>
+                          <span class="badge-completed" style="background:<?= strtolower($d['status']) === 'approved' ? '#dcfce7' : (strtolower($d['status']) === 'pending' ? '#fef9c3' : '#f1f5f9') ?>;color:<?= strtolower($d['status']) === 'approved' ? '#15803d' : (strtolower($d['status']) === 'pending' ? '#92400e' : '#475569') ?>;">
+                            <?= htmlspecialchars($d['status']) ?>
+                          </span>
+                        </td>
+                        <td style="white-space:nowrap;"><?= date('M d, Y', strtotime($d['created_at'])) ?></td>
+                      </tr>
+                    <?php endwhile; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php else: ?>
+              <div class="don-empty"><i class="fas fa-receipt"></i><p>No monetary donations yet.</p></div>
+            <?php endif; ?>
+          </div>
+
+          <!-- Items tab -->
+          <div id="tab-items" class="donation-tab-panel">
+            <?php if ($items->num_rows > 0): ?>
+              <div style="overflow-x:auto;">
+                <table class="don-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th>Qty</th>
+                      <th>Drop-off Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php $items->data_seek(0); while ($it = $items->fetch_assoc()): ?>
+                      <tr>
+                        <td><?= htmlspecialchars($it['item_category']) ?></td>
+                        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                          <?= htmlspecialchars($it['item_description']) ?>
+                        </td>
+                        <td style="font-weight:700;"><?= (int)$it['quantity'] ?></td>
+                        <td style="white-space:nowrap;"><?= date('M d, Y', strtotime($it['dropoff_date'])) ?></td>
+                        <td>
+                          <span class="badge-completed" style="background:<?= strtolower($it['status']) === 'received' ? '#dcfce7' : '#fef9c3' ?>;color:<?= strtolower($it['status']) === 'received' ? '#15803d' : '#92400e' ?>;">
+                            <?= htmlspecialchars($it['status']) ?>
+                          </span>
+                        </td>
+                      </tr>
+                    <?php endwhile; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php else: ?>
+              <div class="don-empty"><i class="fas fa-box-open"></i><p>No item donations yet.</p></div>
+            <?php endif; ?>
+          </div>
+
+        </div>
+        <?php endif; ?>
+
       </div>
       <!-- /RIGHT COLUMN -->
 
@@ -603,6 +763,17 @@ function handleAvatarChange(input) {
     document.getElementById('profileForm').submit();
   };
   reader.readAsDataURL(input.files[0]);
+}
+
+function switchDonationTab(btn, panelId) {
+  btn.closest('.pcard').querySelectorAll('.donation-tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  btn.closest('.pcard').querySelectorAll('.donation-tab-panel').forEach(function(p) {
+    p.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
 }
 </script>
 
