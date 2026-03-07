@@ -54,7 +54,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
     <li class="nav-item">
       <a href="/VolunteerHub/volunteer/organizations.php"
          class="nav-link <?= ($currentPage === 'organizations.php') ? 'active' : '' ?>">
-        <i class="fas fa-building"></i> List of NGOs
+        <i class="fas fa-building"></i> Organizations
       </a>
     </li>
     <li class="nav-item">
