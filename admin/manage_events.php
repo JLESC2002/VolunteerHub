@@ -326,6 +326,10 @@ $result = $stmt->get_result();
   overflow: hidden;
   animation: menuIn .14s ease both;
 }
+.action-menu.open-up {
+  top: auto;
+  bottom: calc(100% + 5px);
+}
 @keyframes menuIn {
   from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1031,13 +1035,31 @@ function confirmDelete(eventId, eventTitle) {
 
 /* ── Action dropdown ─────────────────────────────────────── */
 function closeAllMenus() {
-  document.querySelectorAll('.action-menu').forEach(m => m.style.display = 'none');
+  document.querySelectorAll('.action-menu').forEach(m => {
+    m.style.display = 'none';
+    m.classList.remove('open-up');
+  });
 }
 function toggleActionMenu(btn) {
   const menu      = btn.nextElementSibling;
   const isVisible = menu.style.display === 'block';
   closeAllMenus();
-  if (!isVisible) menu.style.display = 'block';
+  if (!isVisible) {
+    menu.style.display = 'block';
+    // Check if menu goes off-screen bottom
+    setTimeout(() => {
+      const btnRect = btn.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      if (menuRect.bottom > windowHeight - 10) {
+        // Not enough space below, open upward
+        menu.classList.add('open-up');
+      } else {
+        menu.classList.remove('open-up');
+      }
+    }, 0);
+  }
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('.dropdown')) closeAllMenus();

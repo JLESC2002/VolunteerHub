@@ -682,18 +682,35 @@ if ($selected_event_id) {
   margin-top: 4px;
 }
 .mt-modal-cancel {
-  padding: 9px 18px;
-  border: 1.5px solid #e2e8f0;
+  padding: 10px 24px;
+  border: none;
   border-radius: 8px;
-  background: #fff;
-  color: #4a5568;
+  background: #f1f5f9;
+  color: #64748b;
   font: inherit;
-  font-size: .845rem;
+  font-size: .85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all .15s;
+  transition: all .18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
-.mt-modal-cancel:hover { background: #f1f5f9; }
+.mt-modal-cancel:hover {
+  background: #e2e8f0;
+  color: #1a1f2e;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,.08);
+}
+.mt-modal-cancel.primary {
+  background: linear-gradient(135deg, #2d8653, #1a5c3a);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(45,134,83,.25);
+}
+.mt-modal-cancel.primary:hover {
+  background: linear-gradient(135deg, #4caf80, #2d8653);
+  box-shadow: 0 5px 16px rgba(45,134,83,.35);
+}
 .mt-modal-submit {
   padding: 9px 20px;
   background: linear-gradient(135deg, #2d8653, #1a5c3a);
@@ -1114,9 +1131,9 @@ if ($selected_event_id) {
                 justify-content:center;flex-direction:column;">
     </div>
 
-    <div class="mt-modal-footer" style="justify-content:center;margin-top:18px;">
-      <button class="mt-modal-cancel" onclick="closeModal('qrModal')">
-        <i class="fas fa-times" style="margin-right:5px;"></i> Close
+    <div class="mt-modal-footer" style="justify-content:center;margin-top:20px;">
+      <button class="mt-modal-cancel primary" onclick="closeModal('qrModal')">
+        <i class="fas fa-check-circle"></i> Done
       </button>
     </div>
   </div>
