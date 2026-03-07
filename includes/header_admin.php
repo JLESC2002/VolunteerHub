@@ -69,6 +69,19 @@ if (session_status() === PHP_SESSION_NONE) session_start();
         <i class="fas fa-tasks"></i> Manage Tasks
       </a>
     </li>
+    <!-- Add after Manage Tasks nav-item -->
+    <li class="nav-item">
+      <a href="/VolunteerHub/admin/admin_notifications.php"
+        class="nav-link <?= ($currentPage === 'admin_notifications.php') ? 'active' : '' ?>">
+        <i class="fas fa-bell"></i> Notifications
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/VolunteerHub/admin/admin_reports.php"
+        class="nav-link <?= ($currentPage === 'admin_reports.php') ? 'active' : '' ?>">
+        <i class="fas fa-chart-bar"></i> Reports
+      </a>
+    </li>
   </ul>
 
   <span class="sidebar-section-label" style="margin-top:auto;">Account</span>
@@ -100,6 +113,33 @@ if (session_status() === PHP_SESSION_NONE) session_start();
   </div>
 
   <!-- Profile dropdown -->
+  <!-- ── Topbar right side ── -->
+<div class="d-flex align-items-center gap-2">
+
+  <!-- 🔔 Notification Bell -->
+  <div class="dropdown" id="notifDropdownWrap">
+    <button class="notif-bell-btn" id="notifBellBtn"
+            data-bs-toggle="dropdown" aria-expanded="false"
+            aria-label="Notifications">
+      <i class="fas fa-bell"></i>
+      <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown" id="notifDropdownMenu"
+         aria-labelledby="notifBellBtn">
+      <div class="notif-dropdown-header">
+        <span><i class="fas fa-bell me-2"></i>Notifications</span>
+        <a href="/VolunteerHub/admin/admin_notifications.php" class="notif-see-all">See all</a>
+      </div>
+      <div id="notifList">
+        <div class="notif-loading">
+          <i class="fas fa-spinner fa-spin"></i> Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile dropdown -->
   <div class="dropdown">
     <button class="dropdown-toggle" type="button" id="userDropdown"
             data-bs-toggle="dropdown" aria-expanded="false">
@@ -120,6 +160,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
       </li>
     </ul>
   </div>
+
+</div>
 </header>
 
 <!-- ── Main content ── -->
@@ -141,5 +183,55 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
   // Close on ESC
   document.addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
+})();
+/* ── Notification Bell AJAX ───────────────────────────── */
+(function () {
+  const bell    = document.getElementById('notifBellBtn');
+  const badge   = document.getElementById('notifBadge');
+  const list    = document.getElementById('notifList');
+  let loaded    = false;
+
+  function fetchNotifs() {
+    if (loaded) return;
+    loaded = true;
+    fetch('/VolunteerHub/admin/get_notifications.php')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.items || data.items.length === 0) {
+          list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash me-1"></i>No notifications yet.</div>';
+          return;
+        }
+        if (data.unread > 0) {
+          badge.textContent = data.unread > 9 ? '9+' : data.unread;
+          badge.style.display = 'flex';
+        }
+        list.innerHTML = data.items.map(n => `
+          <a class="notif-item ${n.unread ? 'unread' : ''}" href="${n.link}">
+            <div class="notif-icon ${n.color}"><i class="${n.icon}"></i></div>
+            <div class="notif-body">
+              <div class="notif-msg">${n.message}</div>
+              <div class="notif-time">${n.time}</div>
+            </div>
+          </a>`).join('');
+      })
+      .catch(() => {
+        list.innerHTML = '<div class="notif-empty">Could not load notifications.</div>';
+      });
+  }
+
+  // Load on first open of dropdown
+  if (bell) {
+    bell.addEventListener('click', fetchNotifs);
+  }
+
+  // Also show badge on page load (quick count)
+  fetch('/VolunteerHub/admin/get_notifications.php?count_only=1')
+    .then(r => r.json())
+    .then(data => {
+      if (data.unread > 0) {
+        badge.textContent = data.unread > 9 ? '9+' : data.unread;
+        badge.style.display = 'flex';
+      }
+    }).catch(() => {});
 })();
 </script>
