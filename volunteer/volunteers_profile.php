@@ -466,7 +466,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                 <i class="fas fa-pen"></i> Edit Profile
               </button>
               <button type="button" class="btn-id-pw"
-                      onclick="alert('Change password feature coming soon.')">
+                      onclick="openChangePasswordModal()"
                 <i class="fas fa-lock"></i> Change Password
               </button>
             </div>
@@ -731,7 +731,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
   </form>
 
 </div><!-- /profile-page -->
-
+<?php
+  $pw_action = 'volunteer_change_password.php';
+  include '../includes/change_password_modal.php';
+?>
 <script>
 function toggleEdit(editing) {
   document.getElementById('viewMode').style.display    = editing ? 'none' : '';

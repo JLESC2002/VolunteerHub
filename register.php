@@ -50,7 +50,6 @@ $conn->close();
 <select name="role" id="role" required>
     <option value="">Select Role</option>
     <option value="Volunteer">Volunteer</option>
-    <option value="Staff">Staff</option>
     <option value="Admin">Admin</option>
 </select>
 

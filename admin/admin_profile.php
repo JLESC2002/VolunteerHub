@@ -643,6 +643,10 @@ $organization = $stmt->get_result()->fetch_assoc();
               <span>Member since <?= date('M Y', strtotime($admin['created_at'])) ?></span>
             </div>
           </div>
+          <button type="button" class="btn btn-outline-primary btn-sm"
+        onclick="openChangePasswordModal()">
+  <i class="fas fa-lock"></i> Change Password
+</button>
         </div>
       </div>
 
@@ -987,7 +991,10 @@ $organization = $stmt->get_result()->fetch_assoc();
   </div>
 </div>
 <?php endif; ?>
-
+<?php
+  $pw_action = 'admin_change_password.php';
+  include '../includes/change_password_modal.php';
+?>
 <script>
 // ── Modal open/close
 function openModal(id) {
