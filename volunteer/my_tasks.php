@@ -2,25 +2,13 @@
 include '../conn.php';
 include './check_session.php';
 
+// ── Must be resolved before ANY output ───────────────────────────────────────
+$volunteer_id = $_SESSION['volunteer_id'] ?? $_SESSION['user_id'] ?? null;
+
+// ── Page setup ─────────────────────────────────────────────────────────────────
 $pageTitle = "My Tasks";
 $pageCSS   = "/VolunteerHub/styles/volunteer_layout.css";
 include '../includes/header_volunteer.php';
-
-$volunteer_id = $_SESSION['volunteer_id'] ?? $_SESSION['user_id'] ?? null;
-
-// Handle progress update (preserve existing backend logic)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id'], $_POST['progress'])) {
-    $task_id  = intval($_POST['task_id']);
-    $progress = $_POST['progress'];
-    $allowed  = ['Not Started', 'In Progress', 'Completed'];
-    if (in_array($progress, $allowed)) {
-        $upd = $conn->prepare("UPDATE task_assignments SET progress = ? WHERE task_id = ? AND volunteer_id = ?");
-        $upd->bind_param("sii", $progress, $task_id, $volunteer_id);
-        $upd->execute();
-    }
-    header("Location: my_tasks.php");
-    exit;
-}
 
 // Fetch tasks
 $query = $conn->prepare("
@@ -117,24 +105,22 @@ while ($r = $result->fetch_assoc()) {
 .ab-out      { background: #dcfce7; color: #15803d; }
 
 /* Progress dropdown */
-.progress-select {
-  padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  font-size: .8rem; background: #fff; color: var(--text-primary); cursor: pointer;
-  outline: none; transition: border-color .2s;
-}
-.progress-select:focus { border-color: var(--green-mid); }
-
-/* Save button */
-.btn-save-progress {
-  padding: 6px 12px; border: none; border-radius: var(--radius-sm);
-  background: var(--green-mid); color: #fff; font-size: .78rem; font-weight: 600;
-  cursor: pointer; transition: opacity .2s;
-}
-.btn-save-progress:hover { opacity: .85; }
-
 /* Empty */
 .tasks-empty { padding: 60px; text-align: center; color: var(--text-muted); }
 .tasks-empty i { font-size: 3rem; opacity: .3; display: block; margin-bottom: 14px; }
+/* ── Attendance Action Buttons ─────────────────────────── */
+.btn-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px; border: none; border-radius: var(--radius-sm);
+  font-size: .78rem; font-weight: 600; cursor: pointer;
+  text-decoration: none; transition: opacity .18s, transform .12s;
+  white-space: nowrap;
+}
+.btn-action:hover { opacity: .85; transform: translateY(-1px); }
+
+.btn-checkin  { background: #dcfce7; color: #15803d; }
+.btn-checkout { background: #dbeafe; color: #1d4ed8; }
+.btn-cert     { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
 </style>
 
 <div class="tasks-page">
@@ -168,11 +154,11 @@ while ($r = $result->fetch_assoc()) {
           <tr>
             <th>Event</th>
             <th>Task Description</th>
-            <th>Date</th>
+            <th style="min-width: 130px; white-space: nowrap;">Date</th>
             <th>Location</th>
             <th>Attendance</th>
             <th>Status</th>
-            <th>Update Progress</th>
+            <th style="min-width:140px; white-space:nowrap;">Attendance Action</th>
           </tr>
         </thead>
         <tbody>
@@ -200,9 +186,9 @@ while ($r = $result->fetch_assoc()) {
                 <div class="task-event-name"><?= htmlspecialchars($row['event_title']) ?></div>
               </td>
               <td><?= htmlspecialchars($row['description']) ?></td>
-              <td>
-                <span style="font-size:.8rem; background:#eff6ff; color:#1e40af; padding:3px 9px; border-radius:99px; font-weight:600;">
-                  <i class="fas fa-calendar me-1"></i><?= date('M d, Y', strtotime($row['date'])) ?>
+              <td style="white-space: nowrap;">
+                <span style="font-size:.8rem; background:#eff6ff; color:#1e40af; padding:4px 11px; border-radius:99px; font-weight:600; white-space: nowrap; display:inline-flex; align-items:center; gap:5px;">
+                  <i class="fas fa-calendar"></i><?= date('M d, Y', strtotime($row['date'])) ?>
                 </span>
               </td>
               <td>
@@ -229,18 +215,42 @@ while ($r = $result->fetch_assoc()) {
                   <i class="fas <?= $pillIcon ?>"></i> <?= htmlspecialchars($prog) ?>
                 </span>
               </td>
+
+              <!-- ── Attendance Action Cell ─────────────────── -->
               <td>
-                <form method="POST" action="" style="display:flex; gap:6px; align-items:center;">
-                  <input type="hidden" name="task_id" value="<?= (int)$row['task_id'] ?>">
-                  <select name="progress" class="progress-select">
-                    <option value="Not Started" <?= $prog === 'Not Started' ? 'selected' : '' ?>>Not Started</option>
-                    <option value="In Progress" <?= $prog === 'In Progress' ? 'selected' : '' ?>>In Progress</option>
-                    <option value="Completed"   <?= $prog === 'Completed'   ? 'selected' : '' ?>>Completed</option>
-                  </select>
-                  <button type="submit" class="btn-save-progress">
-                    <i class="fas fa-save"></i>
+                <?php
+                  $att       = (int)$row['attended'];
+                  $checkedIn  = ($att >= 1 && !empty($row['check_in']));
+                  $checkedOut = ($att == 2 && !empty($row['check_out']));
+                  $eventId    = (int)$row['event_id'];
+                ?>
+
+                <?php if ($checkedOut): ?>
+                  <!-- Fully done: show Download Certificate button -->
+                  <a href="/VolunteerHub/volunteer/generate_acknowledgement.php?event_id=<?= $eventId ?>"
+                     target="_blank"
+                     class="btn-action btn-cert"
+                     title="Download Certificate of Acknowledgement">
+                    <i class="fas fa-file-certificate"></i> Certificate
+                  </a>
+
+                <?php elseif ($checkedIn): ?>
+                  <!-- Checked in — offer Check-Out scan -->
+                  <button class="btn-action btn-checkout"
+                          onclick="openScanner(<?= $eventId ?>)"
+                          title="Scan Check-Out QR">
+                    <i class="fas fa-sign-out-alt"></i> Check-Out
                   </button>
-                </form>
+
+                <?php else: ?>
+                  <!-- Not checked in yet — offer Check-In scan -->
+                  <button class="btn-action btn-checkin"
+                          onclick="openScanner(<?= $eventId ?>)"
+                          title="Scan Check-In QR">
+                    <i class="fas fa-qrcode"></i> Check-In
+                  </button>
+
+                <?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -255,5 +265,217 @@ while ($r = $result->fetch_assoc()) {
   </div>
 
 </div>
+<!-- ══════════════════════════════════════════════
+     QR SCANNER MODAL
+═════════════════════════════════════════════════ -->
+<div id="qrScannerModal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;">
 
+  <div style="
+    background:#fff; border-radius:16px; padding:28px 28px 24px;
+    width:min(420px,92vw); box-shadow:0 20px 60px rgba(0,0,0,.35);
+    position:relative; text-align:center;">
+
+    <!-- Close -->
+    <button onclick="closeScanner()" style="
+      position:absolute; top:14px; right:16px;
+      background:none; border:none; font-size:1.3rem;
+      color:#94a3b8; cursor:pointer;">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <h5 style="font-weight:700; color:#1a1f2e; margin:0 0 4px;">
+      <i class="fas fa-qrcode" style="color:#2d8653; margin-right:6px;"></i>
+      Scan Event QR Code
+    </h5>
+    <p style="font-size:.83rem; color:#64748b; margin:0 0 18px;">
+      Point your camera at the Check-In or Check-Out QR code at the event.
+    </p>
+
+    <!-- Camera Preview -->
+    <div style="position:relative; border-radius:12px; overflow:hidden;
+                background:#0f172a; width:100%; aspect-ratio:1/1; margin-bottom:16px;">
+      <video id="qrVideo" style="width:100%; height:100%; object-fit:cover;" playsinline></video>
+      <!-- Scanning overlay reticle -->
+      <div style="
+        position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+        pointer-events:none;">
+        <div style="
+          width:58%; aspect-ratio:1/1; border:3px solid rgba(45,134,83,.85);
+          border-radius:10px; box-shadow:0 0 0 2000px rgba(0,0,0,.25);">
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="qrStatus" style="
+      min-height:38px; font-size:.85rem; font-weight:600;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      color:#64748b;">
+      <i class="fas fa-circle-notch fa-spin"></i> Initialising camera…
+    </div>
+  </div>
+</div>
+
+<!-- jsQR (lightweight, no CDN key required) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+
+<script>
+/* ── State ─────────────────────────────────────────────── */
+let _stream      = null;
+let _rafId       = null;
+let _scanning    = false;
+let _activeEvent = null;
+const _canvas    = document.createElement('canvas');
+const _ctx       = _canvas.getContext('2d');
+
+/* ── Open modal ─────────────────────────────────────────── */
+function openScanner(eventId) {
+  _activeEvent = eventId;
+  const modal = document.getElementById('qrScannerModal');
+  modal.style.display = 'flex';
+  setStatus('scanning', '<i class="fas fa-circle-notch fa-spin"></i> Starting camera…');
+  startCamera();
+}
+
+/* ── Close modal ────────────────────────────────────────── */
+function closeScanner() {
+  stopCamera();
+  document.getElementById('qrScannerModal').style.display = 'none';
+  _activeEvent = null;
+  _scanning    = false;
+}
+
+/* ── Camera helpers ─────────────────────────────────────── */
+async function startCamera() {
+  const video = document.getElementById('qrVideo');
+  try {
+    _stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 640 } }
+    });
+    video.srcObject = _stream;
+    await video.play();
+    _scanning = true;
+    setStatus('scanning', '<i class="fas fa-search" style="color:#2d8653;"></i> Scanning… hold QR steady');
+    requestAnimationFrame(scanFrame);
+  } catch(err) {
+    setStatus('error', '<i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i> Camera access denied. Please allow camera permission.');
+  }
+}
+
+function stopCamera() {
+  _scanning = false;
+  cancelAnimationFrame(_rafId);
+  if (_stream) { _stream.getTracks().forEach(t => t.stop()); _stream = null; }
+  const video = document.getElementById('qrVideo');
+  video.srcObject = null;
+}
+
+/* ── Scan loop ──────────────────────────────────────────── */
+function scanFrame() {
+  if (!_scanning) return;
+  const video = document.getElementById('qrVideo');
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    _canvas.width  = video.videoWidth;
+    _canvas.height = video.videoHeight;
+    _ctx.drawImage(video, 0, 0);
+
+    const imageData = _ctx.getImageData(0, 0, _canvas.width, _canvas.height);
+    const code      = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+
+    if (code) {
+      _scanning = false; // stop further scans immediately
+      processQR(code.data);
+      return;
+    }
+  }
+  _rafId = requestAnimationFrame(scanFrame);
+}
+
+/* ── Process decoded QR ─────────────────────────────────── */
+function processQR(raw) {
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) {
+    setStatus('error', '<i class="fas fa-times-circle" style="color:#dc2626;"></i> Invalid QR Code. Please scan an event QR.');
+    setTimeout(() => { _scanning = true; requestAnimationFrame(scanFrame); }, 2000);
+    return;
+  }
+
+  // Validate fields
+  if (!parsed.event_id || !parsed.type || !['checkin','checkout'].includes(parsed.type)) {
+    setStatus('error', '<i class="fas fa-times-circle" style="color:#dc2626;"></i> Unrecognised QR. Please use the event QR code.');
+    setTimeout(() => { _scanning = true; requestAnimationFrame(scanFrame); }, 2000);
+    return;
+  }
+
+  // Guard: scanned QR event must match the row's event
+  if (parseInt(parsed.event_id) !== parseInt(_activeEvent)) {
+    setStatus('error', '<i class="fas fa-exclamation-circle" style="color:#f59e0b;"></i> Wrong event QR. Please scan the correct event code.');
+    setTimeout(() => { _scanning = true; requestAnimationFrame(scanFrame); }, 2500);
+    return;
+  }
+
+  const attendedValue = parsed.type === 'checkin' ? 1 : 2;
+  setStatus('scanning', '<i class="fas fa-circle-notch fa-spin" style="color:#2d8653;"></i> Processing…');
+  submitAttendance(parsed.event_id, attendedValue);
+}
+
+/* ── POST to update_attendance.php ──────────────────────── */
+function submitAttendance(eventId, attendedValue) {
+  const body = new URLSearchParams({
+    event_id:     eventId,
+    volunteer_id: <?= (int)$volunteer_id ?>,
+    attended:     attendedValue
+  });
+
+  fetch('/VolunteerHub/admin/update_attendance.php', {
+    method:      'POST',
+    credentials: 'same-origin',
+    headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:        body.toString()
+  })
+  .then(async res => {
+    const text = await res.text();
+    if (!res.ok) throw new Error(text);
+
+    const label  = attendedValue === 1 ? 'Checked In' : 'Checked Out';
+    const icon   = attendedValue === 1 ? 'fa-sign-in-alt' : 'fa-sign-out-alt';
+    const colour = attendedValue === 1 ? '#15803d'        : '#1d4ed8';
+
+    setStatus('success',
+      `<i class="fas ${icon}" style="color:${colour};"></i>
+       <span style="color:${colour};">Successfully ${label}!</span>`
+    );
+
+    stopCamera();
+    // Reload page after brief success display so button state updates
+    setTimeout(() => { closeScanner(); location.reload(); }, 1800);
+  })
+  .catch(err => {
+    const msg = err.message || 'Server error. Please try again.';
+    setStatus('error', `<i class="fas fa-times-circle" style="color:#dc2626;"></i> ${msg}`);
+    // Allow retry
+    setTimeout(() => {
+      setStatus('scanning', '<i class="fas fa-search" style="color:#2d8653;"></i> Scanning… hold QR steady');
+      _scanning = true;
+      requestAnimationFrame(scanFrame);
+    }, 3000);
+  });
+}
+
+/* ── Status helper ──────────────────────────────────────── */
+function setStatus(type, html) {
+  document.getElementById('qrStatus').innerHTML = html;
+}
+
+/* ── Close on backdrop click ────────────────────────────── */
+document.getElementById('qrScannerModal').addEventListener('click', function(e) {
+  if (e.target === this) closeScanner();
+});
+</script>
 <?php include '../includes/footer.php'; ?>
