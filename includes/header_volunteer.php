@@ -106,6 +106,32 @@ if (session_status() === PHP_SESSION_NONE) session_start();
   </div>
 
   <!-- Profile dropdown -->
+<div class="d-flex align-items-center gap-2">
+
+  <!-- 🔔 Notification Bell -->
+  <div class="dropdown" id="volNotifDropdownWrap">
+    <button class="notif-bell-btn" id="volNotifBellBtn"
+            data-bs-toggle="dropdown" aria-expanded="false"
+            aria-label="Notifications">
+      <i class="fas fa-bell"></i>
+      <span class="notif-badge" id="volNotifBadge" style="display:none;">0</span>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown" id="volNotifDropdownMenu"
+         aria-labelledby="volNotifBellBtn">
+      <div class="notif-dropdown-header">
+        <span><i class="fas fa-bell me-2"></i>Notifications</span>
+        <a href="/VolunteerHub/volunteer/notifications.php" class="notif-see-all">See all</a>
+      </div>
+      <div id="volNotifList">
+        <div class="notif-loading">
+          <i class="fas fa-spinner fa-spin"></i> Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile dropdown (unchanged) -->
   <div class="dropdown">
     <button class="dropdown-toggle" type="button" id="userDropdown"
             data-bs-toggle="dropdown" aria-expanded="false">
@@ -126,6 +152,67 @@ if (session_status() === PHP_SESSION_NONE) session_start();
       </li>
     </ul>
   </div>
+
+</div>
+<script>
+/* ── Volunteer Notification Bell AJAX ─────────────────── */
+(function () {
+  const bell   = document.getElementById('volNotifBellBtn');
+  const badge  = document.getElementById('volNotifBadge');
+  const list   = document.getElementById('volNotifList');
+  let loaded   = false;
+
+  const colorMap = {
+    green:  'ni-green',
+    amber:  'ni-amber',
+    blue:   'ni-blue',
+    red:    'ni-red',
+    purple: 'ni-purple',
+  };
+
+  function fetchNotifs() {
+    if (loaded) return;
+    loaded = true;
+    fetch('/VolunteerHub/volunteer/get_notifications_volunteer.php')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.items || data.items.length === 0) {
+          list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash me-1"></i>No notifications yet.</div>';
+          return;
+        }
+        if (data.unread > 0) {
+          badge.textContent = data.unread > 9 ? '9+' : data.unread;
+          badge.style.display = 'flex';
+        }
+        list.innerHTML = data.items.map(n => `
+          <a class="notif-item ${n.unread ? 'unread' : ''}" href="${n.link}">
+            <div class="notif-icon ${colorMap[n.color] || 'ni-blue'}">
+              <i class="${n.icon}"></i>
+            </div>
+            <div class="notif-body">
+              <div class="notif-msg">${n.message}</div>
+              <div class="notif-time">${n.time}</div>
+            </div>
+          </a>`).join('');
+      })
+      .catch(() => {
+        list.innerHTML = '<div class="notif-empty">Could not load notifications.</div>';
+      });
+  }
+
+  if (bell) bell.addEventListener('click', fetchNotifs);
+
+  // Badge count on page load
+  fetch('/VolunteerHub/volunteer/get_notifications_volunteer.php?count_only=1')
+    .then(r => r.json())
+    .then(data => {
+      if (data.unread > 0) {
+        badge.textContent = data.unread > 9 ? '9+' : data.unread;
+        badge.style.display = 'flex';
+      }
+    }).catch(() => {});
+})();
+</script>
 </header>
 
 <!-- ── Main content ── -->
