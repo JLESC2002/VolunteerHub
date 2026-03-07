@@ -1,107 +1,185 @@
-/* ==== General Reset ==== */
+/* =========================================================
+   VolunteerHub — Landing Page (index_styles.css)
+   Design: Warm, welcoming, civic-purpose aesthetic
+   Font pairing: Playfair Display (display) + DM Sans (body)
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green-dark:   #1a5c3a;
+  --green-mid:    #2d8653;
+  --green-light:  #4caf80;
+  --green-soft:   #e8f5ee;
+  --amber:        #f5a623;
+  --amber-dark:   #c7851a;
+  --neutral-900:  #1a1f2e;
+  --neutral-600:  #4a5568;
+  --neutral-300:  #cbd5e0;
+  --neutral-100:  #f7fafc;
+  --white:        #ffffff;
+  --shadow-sm:    0 2px 8px rgba(0,0,0,.08);
+  --shadow-md:    0 8px 24px rgba(0,0,0,.12);
+  --shadow-lg:    0 20px 48px rgba(0,0,0,.18);
+  --radius:       14px;
+  --transition:   0.25s cubic-bezier(.4,0,.2,1);
+}
+
+html { scroll-behavior: smooth; }
+
 body {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--neutral-100);
+  color: var(--neutral-900);
   min-height: 100vh;
-  font-family: 'Poppins', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0;
+  overflow-x: hidden;
 }
 
-/* ==== Auth Container ==== */
+/* ─── Background texture ─────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(77,175,128,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 85%, rgba(245,166,35,.12) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 60% 30%, rgba(45,134,83,.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Card ────────────────────────────────────────────── */
 .auth-container {
+  position: relative;
+  z-index: 1;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 56px 52px 48px;
   width: 100%;
   max-width: 480px;
-  background: #ffffff;
-  padding: 40px 36px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  margin: 24px;
+  box-shadow: var(--shadow-lg);
   text-align: center;
-  animation: fadeInUp 0.4s ease;
+  border: 1px solid rgba(255,255,255,.8);
+  animation: cardIn .55s cubic-bezier(.22,1,.36,1) both;
 }
 
-.auth-container:hover {
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1);
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(28px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ==== Titles ==== */
+/* Logo mark */
+.auth-container::before {
+  content: '🌿';
+  display: block;
+  font-size: 3rem;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.12));
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+/* ─── Typography ─────────────────────────────────────── */
 .section-title {
-  font-size: 1.9rem;
-  color: #0f172a;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 700;
-  margin-bottom: 12px;
-  letter-spacing: -0.5px;
+  color: var(--green-dark);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 10px;
 }
 
 .subtitle {
-  font-size: 1rem;
-  color: #64748b;
-  margin-bottom: 28px;
+  font-size: .975rem;
+  color: var(--neutral-600);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 36px;
+  max-width: 320px;
+  margin-inline: auto;
+  margin-bottom: 36px;
 }
 
-/* ==== Buttons ==== */
+/* ─── Buttons ─────────────────────────────────────────── */
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  align-items: center; /* Center buttons horizontally */
+  gap: 12px;
+  margin-bottom: 32px;
 }
 
-
-.btn-primary,
-.btn-secondary {
+.btn-primary, .btn-secondary {
   display: block;
-  width: 80%;
-  max-width: 260px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  border-radius: 10px;
-  text-decoration: none;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
   font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.25s ease;
-  border: none;
+  text-decoration: none;
   cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: .01em;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Primary button — gradient blue */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
 .btn-primary {
-  background: linear-gradient(to right, #2563eb, #1d4ed8);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
+  color: var(--white);
+  box-shadow: 0 4px 14px rgba(45,134,83,.35);
 }
 .btn-primary:hover {
-  background: linear-gradient(to right, #1e40af, #1d4ed8);
+  background: linear-gradient(135deg, var(--green-light), var(--green-mid));
+  box-shadow: 0 6px 20px rgba(45,134,83,.45);
   transform: translateY(-2px);
+  color: var(--white);
+  text-decoration: none;
 }
+.btn-primary:active { transform: translateY(0); }
 
-/* Secondary button — light gray */
 .btn-secondary {
-  background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
+  background: transparent;
+  color: var(--green-dark);
+  border-color: var(--green-mid);
 }
 .btn-secondary:hover {
-  background: #e2e8f0;
-  transform: translateY(-1px);
+  background: var(--green-soft);
+  border-color: var(--green-dark);
+  transform: translateY(-2px);
+  color: var(--green-dark);
+  text-decoration: none;
 }
 
-/* ==== Footer / Logo ==== */
+/* ─── Footer text ─────────────────────────────────────── */
 .footer-text {
-  margin-top: 24px;
-  font-size: 0.9rem;
-  color: #94a3b8;
+  font-size: .8rem;
+  color: var(--neutral-300);
+  margin-top: 8px;
 }
 
-/* ==== Animations ==== */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ─── Responsive ──────────────────────────────────────── */
+@media (max-width: 520px) {
+  .auth-container { padding: 40px 28px 36px; margin: 16px; }
+  .section-title  { font-size: 1.6rem; }
 }

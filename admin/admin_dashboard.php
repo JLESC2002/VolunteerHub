@@ -63,148 +63,213 @@ while ($row = $genderData->fetch_assoc()) {
     $genderLabels[] = $row['gender'];
     $genderCounts[] = $row['event_count'];
 }
+
+// ── Stat card counts ──────────────────────────────────
+$totalVolunteers = $conn->query("SELECT COUNT(*) AS c FROM users WHERE role = 'Volunteer'")->fetch_assoc()['c'] ?? 0;
+$totalEvents     = $conn->query("SELECT COUNT(*) AS c FROM events WHERE created_by = {$_SESSION['user_id']}")->fetch_assoc()['c'] ?? 0;
+$openEvents      = $conn->query("SELECT COUNT(*) AS c FROM events WHERE created_by = {$_SESSION['user_id']} AND status = 'Open'")->fetch_assoc()['c'] ?? 0;
+$totalTasks      = $conn->query("SELECT COUNT(*) AS c FROM tasks t JOIN events e ON e.id = t.event_id WHERE e.created_by = {$_SESSION['user_id']}")->fetch_assoc()['c'] ?? 0;
+$pendingApps     = $conn->query("SELECT COUNT(*) AS c FROM volunteer_applications va JOIN events e ON e.id = va.event_id WHERE e.created_by = {$_SESSION['user_id']} AND va.status = 'pending'")->fetch_assoc()['c'] ?? 0;
 ?>
 
-<div class="container-fluid dashboard-page">
+<div class="container-fluid px-0">
 
-  <!-- 🏆 Leaderboard -->
-  <div class="row g-4 mb-4">
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-header bg-white border-0 pb-0">
-          <h5 class="fw-bold text-primary mb-0">
-            <i class="fas fa-trophy me-2 text-warning"></i>Leaderboard
-          </h5>
-        </div>
-        <div class="card-body">
-          <table class="table table-striped align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Rank</th>
-                <th>Name</th>
-                <th>Completed Tasks</th>
-              </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $rank = 1;
-                while ($row = $leaderboardResult->fetch_assoc()) {
-                    echo "<tr>
-                            <td>{$rank}</td>
-                            <td>" . htmlspecialchars($row['name']) . "</td>
-                            <td>{$row['completed_tasks']}</td>
-                          </tr>";
-                    $rank++;
-                } ?>
-            </tbody>
-          </table>
-        </div>
+  <!-- ── Page header ─────────────────────────────────── -->
+  <div class="dash-page-header mb-4">
+    <div>
+      <h1 class="dash-page-title">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+      </h1>
+      <p class="dash-page-subtitle">Welcome back, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?>. Here's what's happening today.</p>
+    </div>
+    <a href="manage_events.php" class="btn dash-btn-primary">
+      <i class="fas fa-plus me-2"></i>New Event
+    </a>
+  </div>
+
+  <!-- ── Stat cards ──────────────────────────────────── -->
+  <div class="dash-stats-grid mb-4">
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon green"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="dash-stat-label">Total Volunteers</div>
+        <div class="dash-stat-value"><?= number_format($totalVolunteers) ?></div>
       </div>
     </div>
-
-
-     <!-- 📊 Gender Chart -->
-    <div class="col-12 col-lg-6">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-header bg-white border-0 pb-0">
-          <h5 class="fw-bold text-primary mb-0">
-            <i class="fas fa-venus-mars me-2 text-info"></i>Gender Participation
-          </h5>
-        </div>
-        <div class="card-body text-center">
-                <canvas id="genderChart"></canvas> 
-<script src="../vendor/chart.min.js"></script>
-<script>
-    const genderLabels = <?= json_encode($genderLabels) ?>;
-    const genderCounts = <?= json_encode($genderCounts) ?>;
-
-    const ctx = document.getElementById('genderChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: genderLabels,
-            datasets: [{
-                label: 'Event Participation',
-                data: genderCounts,
-                backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0'],
-                borderColor: '#fff',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' },
-                title: { display: true, text: 'Event Participation by Gender' }
-            }
-        }
-    });
-    
-</script>
-</div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon blue"><i class="fas fa-calendar-alt"></i></div>
+      <div>
+        <div class="dash-stat-label">Total Events</div>
+        <div class="dash-stat-value"><?= number_format($totalEvents) ?></div>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon amber"><i class="fas fa-calendar-check"></i></div>
+      <div>
+        <div class="dash-stat-label">Open Events</div>
+        <div class="dash-stat-value"><?= number_format($openEvents) ?></div>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon teal"><i class="fas fa-tasks"></i></div>
+      <div>
+        <div class="dash-stat-label">Total Tasks</div>
+        <div class="dash-stat-value"><?= number_format($totalTasks) ?></div>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon red"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="dash-stat-label">Pending Applications</div>
+        <div class="dash-stat-value"><?= number_format($pendingApps) ?></div>
       </div>
     </div>
   </div>
-      <!-- 📅 Daily Reports -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white border-0 pb-0">
-      <h5 class="fw-bold text-primary mb-0">
-        <i class="fas fa-calendar-day me-2 text-secondary"></i>Daily Reports (Event Participation)
-      </h5>
-    </div>
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Event Title</th>
-              <th>Approved Volunteers</th>
-              <th>Completed Tasks</th>
-            </tr>
+
+  <!-- ── Row: Leaderboard + Chart ────────────────────── -->
+  <div class="dash-two-col mb-4">
+
+    <!-- Leaderboard -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span><i class="fas fa-trophy text-warning me-2"></i>Top Volunteers</span>
+      </div>
+      <div class="dash-card-body p-0">
+        <table class="dash-table">
+          <thead>
+            <tr><th>#</th><th>Volunteer</th><th>Completed Tasks</th></tr>
           </thead>
           <tbody>
-                <?php while ($row = $dailyReportResult->fetch_assoc()) { ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['title']) ?></td>
-                        <td><?= $row['approved_volunteers'] ?></td>
-                        <td><?= $row['completed_tasks'] ?></td>
-                    </tr>
-                <?php } ?>
+            <?php $rank = 1; while ($row = $leaderboardResult->fetch_assoc()): ?>
+            <tr>
+              <td>
+                <?php if ($rank === 1): ?>
+                  <span class="dash-rank gold">🥇</span>
+                <?php elseif ($rank === 2): ?>
+                  <span class="dash-rank silver">🥈</span>
+                <?php elseif ($rank === 3): ?>
+                  <span class="dash-rank bronze">🥉</span>
+                <?php else: ?>
+                  <span class="dash-rank-num"><?= $rank ?></span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <div class="dash-volunteer-name"><?= htmlspecialchars($row['name']) ?></div>
+              </td>
+              <td>
+                <span class="dash-task-badge"><?= $row['completed_tasks'] ?></span>
+              </td>
+            </tr>
+            <?php $rank++; endwhile; ?>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Gender Chart -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span><i class="fas fa-venus-mars text-info me-2"></i>Gender Participation</span>
+      </div>
+      <div class="dash-card-body d-flex align-items-center justify-content-center" style="min-height:260px;">
+        <div style="max-width:280px;width:100%;">
+          <canvas id="genderChart"></canvas>
+        </div>
+      </div>
+    </div>
+
   </div>
 
- <!-- 📅 Weekly Events -->
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-white border-0 pb-0">
-      <h5 class="fw-bold text-primary mb-0">
-        <i class="fas fa-thumbtack me-2 text-danger"></i>Weekly Available Events
-      </h5>
-    </div>
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Event Title</th>
-              <th>Date</th>
-              <th>Location</th>
-            </tr>
+  <!-- ── Row: Event Reports + Weekly Events ──────────── -->
+  <div class="dash-two-col mb-4">
+
+    <!-- Daily Reports -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span><i class="fas fa-chart-bar text-secondary me-2"></i>Recent Event Participation</span>
+        <a href="manage_events.php" class="dash-card-link">View all</a>
+      </div>
+      <div class="dash-card-body p-0">
+        <table class="dash-table">
+          <thead>
+            <tr><th>Event</th><th>Volunteers</th><th>Tasks Done</th></tr>
           </thead>
           <tbody>
-                <?php while ($row = $weeklyEventsResult->fetch_assoc()) { ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['title']) ?></td>
-                        <td><?= htmlspecialchars($row['date']) ?></td>
-                        <td><?= htmlspecialchars($row['location']) ?></td>
-                    </tr>
-                <?php } ?>
-              </tbody>
+            <?php while ($row = $dailyReportResult->fetch_assoc()): ?>
+            <tr>
+              <td class="dash-event-name"><?= htmlspecialchars($row['title']) ?></td>
+              <td><span class="dash-pill blue"><?= $row['approved_volunteers'] ?></span></td>
+              <td><span class="dash-pill green"><?= $row['completed_tasks'] ?></span></td>
+            </tr>
+            <?php endwhile; ?>
+          </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Weekly Events -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <span><i class="fas fa-calendar-week text-danger me-2"></i>This Week's Events</span>
+        <a href="manage_events.php" class="dash-card-link">Manage</a>
+      </div>
+      <div class="dash-card-body p-0">
+        <?php
+        // re-run since result was already iterated
+        $weeklyEventsResult2 = $conn->query("SELECT id, title, date, location FROM events WHERE created_by = {$_SESSION['user_id']} AND WEEK(date) = WEEK(CURDATE()) AND status = 'Open' ORDER BY date ASC");
+        if ($weeklyEventsResult2 && $weeklyEventsResult2->num_rows > 0):
+          while ($row = $weeklyEventsResult2->fetch_assoc()): ?>
+          <div class="dash-event-item">
+            <div class="dash-event-dot"></div>
+            <div class="dash-event-info">
+              <div class="dash-event-title"><?= htmlspecialchars($row['title']) ?></div>
+              <div class="dash-event-meta">
+                <i class="fas fa-calendar-day me-1"></i><?= htmlspecialchars($row['date']) ?>
+                &nbsp;·&nbsp;
+                <i class="fas fa-map-marker-alt me-1"></i><?= htmlspecialchars($row['location']) ?>
+              </div>
+            </div>
+          </div>
+        <?php endwhile; else: ?>
+          <div class="dash-empty">
+            <i class="fas fa-calendar-times"></i>
+            <p>No events this week</p>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+
   </div>
+
+</div>
+
+<!-- Chart script (keep existing chart.min.js reference) -->
+<script src="../vendor/chart.min.js"></script>
+<script>
+const genderLabels = <?= json_encode($genderLabels) ?>;
+const genderCounts = <?= json_encode($genderCounts) ?>;
+const ctx = document.getElementById('genderChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: genderLabels,
+        datasets: [{
+            data: genderCounts,
+            backgroundColor: ['#3b82f6','#ec4899','#f59e0b','#10b981'],
+            borderColor: '#fff',
+            borderWidth: 3,
+            hoverOffset: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+            title: { display: false }
+        }
+    }
+});
+</script>
 
 <?php include '../includes/footer.php'; ?>

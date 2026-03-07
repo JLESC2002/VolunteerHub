@@ -1,991 +1,713 @@
+/* =========================================================
+   VolunteerHub — Volunteer Layout (volunteer_layout.css)
+   Shares the design system from admin_layout but uses a
+   warmer, more welcoming volunteer-focused aesthetic.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  /* Brand */
+  --green-dark:    #1a5c3a;
+  --green-mid:     #2d8653;
+  --green-light:   #4caf80;
+  --green-soft:    #e8f5ee;
+  --amber:         #f5a623;
+  --amber-soft:    #fff8ed;
+  --teal:          #0d9488;
+
+  /* UI */
+  --bg-body:       #f0f4f8;
+  --bg-card:       #ffffff;
+  --bg-sidebar:    #ffffff;
+  --bg-topbar:     #ffffff;
+  --border:        #e2e8f0;
+  --border-light:  #f1f5f9;
+
+  /* Text */
+  --text-primary:  #1a1f2e;
+  --text-secondary:#4a5568;
+  --text-muted:    #94a3b8;
+
+  /* Status */
+  --success:       #16a34a;
+  --warning:       #d97706;
+  --danger:        #dc2626;
+  --info:          #2563eb;
+
+  /* Layout */
+  --sidebar-w:     260px;
+  --topbar-h:      64px;
+  --radius-sm:     8px;
+  --radius-md:     12px;
+  --radius-lg:     16px;
+  --shadow-sm:     0 1px 4px rgba(0,0,0,.06);
+  --shadow-md:     0 4px 16px rgba(0,0,0,.09);
+  --shadow-lg:     0 12px 32px rgba(0,0,0,.12);
+  --transition:    0.22s cubic-bezier(.4,0,.2,1);
+}
+
+html { scroll-behavior: smooth; }
+
 body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    background: #f8fafc;
-    overflow-x: hidden;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  margin: 0;
+  overflow-x: hidden;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-/* 🌟 Topbar */
-.topbar {
-    position: sticky;
-    top: 0;
-    background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-    z-index: 1002;
-}
-
-/* ☰ Hamburger Button */
-#toggleSidebar {
-    border: none;
-    font-size: 1.2rem;
-    background: none;
-    color: #333;
-    cursor: pointer;
-}
-#toggleSidebar:hover {
-    background: #f0f0f0;
-    border-radius: 6px;
-}
-
-/* 📚 Sidebar */
+/* ─── Sidebar ──────────────────────────────────────────── */
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: -260px;
-    width: 260px;
-    height: 100%;
-    background: #ffffff;
-    border-right: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    z-index: 1100;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: calc(-1 * var(--sidebar-w));
+  width: var(--sidebar-w);
+  height: 100%;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  transition: left var(--transition), box-shadow var(--transition);
+  z-index: 1100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.active {
-    left: 0;
+  left: 0;
+  box-shadow: var(--shadow-lg);
 }
 
 .sidebar-header {
-    border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  background: var(--bg-sidebar);
+  z-index: 1;
+  min-height: var(--topbar-h);
 }
+
+.sidebar-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.sidebar-header .brand-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-header .brand-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--green-dark);
+  letter-spacing: -.01em;
+}
+
+#closeSidebar {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  font-size: .85rem;
+}
+
+#closeSidebar:hover {
+  background: var(--bg-body);
+  color: var(--danger);
+}
+
+.sidebar .nav {
+  padding: 8px 12px;
+  flex: 1;
+  gap: 2px;
+}
+
+.sidebar .nav-item { width: 100%; }
 
 .sidebar .nav-link {
-    color: #333;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    border-radius: 6px;
-    transition: 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: .9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition);
+  position: relative;
 }
 
-.sidebar .nav-link:hover,
+.sidebar .nav-link i {
+  width: 18px;
+  text-align: center;
+  font-size: .9rem;
+  color: var(--text-muted);
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar .nav-link:hover {
+  background: var(--green-soft);
+  color: var(--green-dark);
+}
+
+.sidebar .nav-link:hover i { color: var(--green-mid); }
+
 .sidebar .nav-link.active {
-    background: #007bff;
-    color: #fff;
+  background: linear-gradient(135deg, var(--green-soft), #d4eddf);
+  color: var(--green-dark);
+  font-weight: 600;
 }
 
-/* 📄 Page Content */
+.sidebar .nav-link.active i { color: var(--green-mid); }
+
+.sidebar .nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  background: var(--green-mid);
+  border-radius: 0 3px 3px 0;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 1099;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
+/* ─── Topbar ───────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  height: var(--topbar-h);
+  background: var(--bg-topbar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1002;
+  box-shadow: var(--shadow-sm);
+}
+
+#toggleSidebar {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+#toggleSidebar:hover {
+  background: var(--green-soft);
+  border-color: var(--green-light);
+  color: var(--green-dark);
+}
+
+.topbar .brand-link {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--green-dark);
+  text-decoration: none;
+  letter-spacing: -.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar .brand-link::before { content: '🌿'; font-size: 1.2rem; }
+
+.topbar .dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.topbar .dropdown-toggle:hover {
+  background: var(--green-soft);
+  border-color: var(--green-light);
+}
+
+.topbar .dropdown-toggle .fa-user-circle {
+  color: var(--green-mid);
+  font-size: 1.1rem;
+}
+
+.dropdown-menu {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 8px !important;
+  animation: dropDown .15s ease both;
+}
+
+@keyframes dropDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  border-radius: var(--radius-sm) !important;
+  font-size: .875rem !important;
+  font-weight: 500 !important;
+  padding: 9px 14px !important;
+  color: var(--text-primary) !important;
+  transition: background var(--transition) !important;
+}
+
+.dropdown-item:hover { background: var(--bg-body) !important; }
+.dropdown-item.text-danger { color: var(--danger) !important; }
+.dropdown-item.text-danger:hover { background: #fef2f2 !important; }
+.dropdown-divider { margin: 4px 0 !important; border-color: var(--border-light) !important; }
+
+/* ─── Page content ─────────────────────────────────────── */
 .page-content {
-    padding: 30px;
-    min-height: calc(100vh - 60px);
-    background: #f8fafc;
-    transition: margin-left 0.3s ease;
+  padding: 32px 28px;
+  min-height: calc(100vh - var(--topbar-h));
+  background: var(--bg-body);
 }
 
-/* 🦶 Footer */
-.footer {
-    font-size: 0.9rem;
-    background: #fff;
-    border-top: 1px solid #e2e8f0;
+/* ─── Page titles ──────────────────────────────────────── */
+.page-title, h2.section-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 28px;
 }
 
-/* 📱 Mobile Overlay */
-@media (max-width: 992px) {
-    .sidebar {
-        width: 240px;
-    }
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-/* Overlay when sidebar is open */
-.sidebar.active::after {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 260px;
-    width: calc(100vw - 260px);
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: -1;
+/* ─── Cards ────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition);
 }
 
-/* Organization List Grid */
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.card-body { padding: 22px; }
+
+/* ─── Organization grid cards ──────────────────────────── */
 .org-list-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 8px;
 }
 
 .org-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 1rem 1.25rem; /* ⬅️ slightly reduced padding */
-    text-align: center;
-    transition: all 0.2s ease;
-    border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 26px 22px;
+  text-align: center;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-
 .org-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--green-light);
 }
 
 .org-card-logo {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-    margin-bottom: .5rem;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 3px solid var(--green-soft);
+  margin-bottom: 14px;
+  background: var(--bg-body);
 }
 
 .org-placeholder {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: #eee;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: #777;
-    margin: 0 auto .5rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: var(--green-mid);
+  margin: 0 auto 14px;
+  border: 3px solid #d4eddf;
 }
 
 .org-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: .3rem;
-    color: #222;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-primary);
 }
 
 .org-desc {
-    font-size: .9rem;
-    color: #555;
-    margin-bottom: .5rem;
-    min-height: 48px;
+  font-size: .84rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .org-address {
-    font-size: .85rem;
-    color: #666;
-    margin-bottom: .8rem;
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
 }
 
-.page-container {
-    padding: 1.5rem;
+/* ─── Event cards ──────────────────────────────────────── */
+.event-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* Page Title / Card Container */
-.card {
-    border-radius: 10px;
-    background: #fff;
+.event-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--green-light);
 }
 
-/* Grid Layout */
-.org-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 🧩 Two cards per row */
-    gap: 1.5rem;
-    margin-top: 1rem;
+.event-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-/* Adjust for smaller screens */
-@media (max-width: 992px) {
-    .org-grid {
-        grid-template-columns: 1fr; /* Stack on tablets and phones */
-    }
+.event-card-meta {
+  font-size: .82rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-
-/* Organization Card */
-.org-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.25rem;
-    text-align: center;
-    transition: all 0.2s ease;
-    border: 1px solid #e2e8f0;
-}
-
-.org-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-}
-
-/* Organization Logo */
-.org-logo {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid #007bff;
-    background: #f8fafc;
-}
-
-/* Placeholder for missing logo */
-.org-placeholder {
-    width: 90px;
-    height: 90px;
-    background: #f1f5f9;
-    border-radius: 50%;
-    margin: 0 auto;
-}
-
-/* Text Styling */
-.org-card h5 {
-    color: #1e293b;
-    font-weight: 600;
-}
-
-.org-card p {
-    color: #475569;
-    line-height: 1.4;
-}
-
-/* Buttons */
-.org-card .btn {
-    border-radius: 6px;
-    font-weight: 500;
-    transition: 0.2s;
-}
-
-.org-card .btn:hover {
-    background-color: #007bff;
-    color: #fff;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    .org-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    }
-}
-/* 1. Root Variables & General Styles */
-:root {
-    --color-primary-content: #1e1e1e;
-    --color-accent-content: #007bff; /* Vibrant Blue */
-    --color-background-content: #f7f7f7;
-    --color-white-content: #ffffff;
-    --color-text-light-content: #666;
-    --color-success: #28a745;
-    --color-warning: #ffc107;
-    --color-danger: #dc3545;
-    --border-radius-content: 8px;
-    --shadow-medium-content: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
-}
-
-/* 2. Scoped Container and General Elements */
-/* Target the main wrapper used on the organization profile page */
-.org-container {
-    background: var(--color-white-content);
-    border-radius: var(--border-radius-content);
-    padding: 30px; /* Increased padding */
-    margin: 40px auto;
-    max-width: 1200px; /* Wider container */
-    box-shadow: var(--shadow-medium-content);
-    border: 1px solid #eee; /* Subtle border for separation */
-    /* Ensure typography matches the page's font, but can be customized */
-    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    color: var(--color-primary-content);
-}
-
-/* Headers inside the container */
-.org-container h1, .org-container h2, .org-container h3 {
-    font-weight: 700;
-    margin-top: 0;
-}
-
-/* 3. Header Section */
-.org-container .org-header {
-    text-align: center;
-    margin-bottom: 50px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #eee;
-}
-
-.org-container .org-header h1 {
-    font-size: 36px;
-    color: var(--color-primary-content);
-    margin-bottom: 10px;
-    letter-spacing: -0.5px;
-}
-
-.org-container .org-header p {
-    font-size: 17px;
-    color: var(--color-text-light-content);
-    max-width: 800px;
-    margin: 10px auto;
-}
-
-/* 4. Section Titles (WTR Look) */
-.org-container .section {
-    margin-top: 60px;
-}
-
-.org-container .section h2 {
-    font-size: 24px;
-    color: var(--color-primary-content);
-    margin-bottom: 20px;
-    padding-left: 0;
-    border-left: none;
-    position: relative;
-    padding-bottom: 10px;
-}
-
-.org-container .section h2::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 60px;
-    height: 3px;
-    background-color: var(--color-accent-content);
-}
-
-/* 5. Buttons & Donation Section (ADJUSTED) */
-.org-container .donation-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px; /* Reduced gap */
-    margin: 30px 0; /* Reduced margin */
-}
-
-.org-container .btn-primary,
-.org-container .btn-secondary,
-.org-container .btn-warning,
-.org-container .btn-success {
-    padding: 10px 20px; /* Smaller padding */
-    border: 1px solid transparent; /* Slightly thinner border */
-    border-radius: 6px; /* Slightly smaller radius */
-    font-size: 14px; /* Smaller font size */
-    font-weight: 500; /* Slightly lighter weight */
-    text-transform: none; /* Removed uppercase for a cleaner look */
-    letter-spacing: 0; /* Removed letter-spacing */
-    transition: var(--transition);
-}
-
-/* Specific button colors (kept the same, but smaller padding) */
-.org-container .btn-primary { background-color: var(--color-accent-content); color: var(--color-white-content); border-color: var(--color-accent-content); }
-.org-container .btn-secondary { background-color: var(--color-white-content); color: var(--color-accent-content); border-color: var(--color-accent-content); }
-.org-container .btn-warning { background-color: var(--color-warning); color: var(--color-primary-content); border-color: var(--color-warning); }
-.org-container .btn-success { background-color: var(--color-success); color: var(--color-white-content); border-color: var(--color-success); }
-
-
-/* 6. Forms and Modals (ADJUSTED) */
-/* Inputs within the modals */
-.org-container .modal-content input:not([type="file"]),
-.org-container .modal-content textarea,
-.org-container .modal-content select {
-    width: 100%;
-    padding: 9px; /* Reduced input padding */
-    margin-bottom: 12px; /* Reduced margin */
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    font-size: 14px; /* Reduced input font size */
-}
-
-/* Modal Content Styling (ADJUSTED) */
-.org-container .modal-content {
-    background: var(--color-white-content);
-    padding: 25px; /* Reduced modal padding */
-    max-width: 380px; /* Significantly narrower modal */
-    width: 90%;
-    border-radius: 6px; /* Smaller border radius */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Lighter shadow */
-}
-
-.org-container .modal-content h3 {
-    font-size: 20px; /* Slightly smaller header */
-}
-
-.org-container .modal-content img {
-    margin: 15px auto; /* Reduced margin */
-    max-width: 100%;
-    height: auto;
-}
-
-/* Modal form button group */
-.org-container .modal-content form > div {
-    margin-top: 15px; /* Reduced margin */
-}
-
-/* 7. Responsive Adjustments (ADJUSTED for smaller buttons) */
-@media (max-width: 768px) {
-    /* ... (keep the table-specific styles from the previous revision) ... */
-
-    .org-container .donation-buttons {
-        flex-direction: column;
-    }
-
-    .org-container .btn-primary, .org-container .btn-secondary, .org-container .btn-warning {
-        width: 100%;
-        padding: 10px 15px; /* Ensure mobile buttons are still comfortable */
-    }
-}
-
-/* 8. Responsive Adjustments for Tables */
-@media (max-width: 768px) {
-    /* Scoping the table mobile styles to only apply inside .org-container */
-    .org-container table,
-    .org-container thead,
-    .org-container tbody,
-    .org-container th,
-    .org-container td,
-    .org-container tr {
-        display: block;
-    }
-
-    .org-container thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
-
-    .org-container td {
-        border: none;
-        border-bottom: 1px solid #eee;
-        position: relative;
-        padding-left: 50%;
-        text-align: right;
-    }
-
-    /* NOTE: You still need to add data-label attributes to your PHP <td> elements for this to work. */
-    .org-container td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: 600;
-        color: var(--color-primary-content);
-    }
-
-    .org-container .donation-buttons {
-        flex-direction: column;
-    }
-
-    .org-container .btn-primary, .org-container .btn-secondary, .org-container .btn-warning {
-        width: 100%;
-    }
-}
-
-
-/* 1. Page Container & Title - INCREASED MAX-WIDTH */
-.dashboard-container {
-    max-width: 1200px; /* INCREASED: Use more screen space */
-    margin: 40px auto;
-    padding: 0 20px;
-}
-
-.section-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1e293b; /* Dark text */
-    margin-bottom: 30px; /* Increased margin */
-    border-bottom: 3px solid #007bff; /* Blue underline accent */
-    display: inline-block;
-    padding-bottom: 8px;
-    line-height: 1.2;
-}
-
-.section-title i {
-    color: #007bff; /* Accent color for icon */
-    margin-right: 10px;
-}
-
-/* 2. Table Styles (Desktop View) - BIGGER PADDING/FONT */
+/* ─── Tables ───────────────────────────────────────────── */
 .table-wrapper {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow */
-    overflow-x: auto;
-    border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  overflow-x: auto;
+  margin-bottom: 24px;
 }
 
 .styled-table {
-    width: 100%; /* Ensure it fills the container */
-    border-collapse: separate; /* Changed to separate for better border radius */
-    border-spacing: 0; /* Ensures clean borders */
-    font-size: 15px; /* SLIGHTLY BIGGER FONT */
-    text-align: left;
-    min-width: 800px; /* Increased minimum width to make it feel bigger */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+  min-width: 500px;
 }
 
 .styled-table thead tr {
-    background-color: #007bff; /* Blue header */
-    color: #ffffff; /* White text */
-    text-align: left;
-    font-weight: 600;
-    /* Removed bottom border here since we're using background color */
+  background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+  color: var(--bg-card);
 }
 
-.table-wrapper {
-    width: 100%;
-    /* *** CRITICAL FIX: ENABLE HORIZONTAL SCROLLING *** */
-    overflow-x: auto; 
-}
-.styled-table th,
-.styled-table td {
-    /* Set the desired padding only once */
-    padding: 16px 22px; 
-    
-    vertical-align: middle;
-    border: none;
-    border-bottom: 1px solid #f1f5f9;
-    
-    /* CRITICAL FIX: Keep text on a single line */
-    white-space: nowrap;
-    
-    /* Removed the duplicate 'padding: 12px 15px;' that was here */
-    text-align: left;
+.styled-table thead th {
+  padding: 14px 18px;
+  font-weight: 600;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  border: none;
 }
 
 .styled-table tbody tr {
-    border-bottom: 1px solid #e2e8f0;
-    transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--border-light);
+  transition: background var(--transition);
 }
 
-.styled-table tbody tr:nth-of-type(even) {
-    background-color: #f8fafc; /* Subtle striping */
+.styled-table tbody tr:last-child { border-bottom: none; }
+.styled-table tbody tr:nth-child(even) { background: #fafcff; }
+.styled-table tbody tr:hover { background: var(--green-soft); }
+
+.styled-table td {
+  padding: 13px 18px;
+  vertical-align: middle;
+  color: var(--text-primary);
 }
-.styled-table tbody tr:last-of-type td {
-    border-bottom: none; /* Remove border on the very last row */
-}
 
-.styled-table tbody tr:hover {
-    background-color: #eef3ff; /* Light hover effect */
-}
-
-/* Adjusted Column Widths for My Tasks Table (6 Columns) */
-.styled-table td:nth-child(1) { width: 15%; font-weight: 600; } /* Event Title */
-.styled-table td:nth-child(2) { width: 30%; color: #64748b; } /* Task Description */
-.styled-table td:nth-child(3) { width: 10%; white-space: nowrap; } /* Date */
-.styled-table td:nth-child(4) { width: 15%; } /* Location */
-.styled-table td:nth-child(5) { width: 15%; text-align: center; } /* Attendance */
-.styled-table td:nth-child(6) { width: 15%; text-align: center; } /* Progress */
-
-
-/* ==========================================================
-    BADGE STYLES
-    ========================================================== */
+/* ─── Badges ───────────────────────────────────────────── */
 .badge {
-    display: inline-block;
-    padding: .5em .8em; /* INCREASED PADDING */
-    font-size: 80%; /* SLIGHTLY BIGGER FONT */
-    font-weight: 700;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    border-radius: 9999px; /* Pill shape */
-    color: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    text-transform: uppercase;
-}
-.badge small {
-    display: block;
-    font-weight: 400;
-    font-size: 90%;
-    margin-top: 2px;
-}
-.bg-success {
-    background-color: #10b981 !important; /* Emerald Green */
-}
-.bg-warning {
-    background-color: #f59e0b !important; /* Amber Yellow */
-    color: #fff; /* White text for better contrast */
-}
-.bg-secondary {
-    background-color: #64748b !important; /* Slate Gray */
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .02em;
 }
 
+.badge-success  { background: #dcfce7; color: #15803d; }
+.badge-warning  { background: #fef9c3; color: #a16207; }
+.badge-danger   { background: #fee2e2; color: #b91c1c; }
+.badge-secondary{ background: #f1f5f9; color: #475569; }
+.badge-info     { background: #dbeafe; color: #1d4ed8; }
+.badge-primary  { background: var(--green-soft); color: var(--green-dark); }
 
-/* ==========================================================
-    BUTTON STYLES (Extended for My Tasks Table/Modal)
-    ========================================================== */
+/* ─── Buttons ──────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition);
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
 
-/* Primary Button (Used for Check In) - Customized to be Blue for Action */
+.btn-sm  { padding: 6px 12px; font-size: .8rem; }
+.btn-lg  { padding: 12px 26px; font-size: 1rem; }
+.btn-block { width: 100%; justify-content: center; }
+
 .btn-primary {
-    background-color: #007bff; /* Vibrant Blue */
-    color: white;
-    border: none;
-    padding: 10px 16px; /* SLIGHTLY BIGGER PADDING */
-    border-radius: 8px; /* Slightly more rounded */
-    cursor: pointer;
-    font-weight: 600; /* Slightly bolder */
-    transition: background-color 0.2s, transform 0.1s;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
+  color: var(--bg-card);
+  box-shadow: 0 2px 8px rgba(45,134,83,.28);
 }
 .btn-primary:hover {
-    background-color: #0056b3;
-    transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--green-light), var(--green-mid));
+  box-shadow: 0 4px 14px rgba(45,134,83,.38);
+  transform: translateY(-1px);
+  color: var(--bg-card);
+  text-decoration: none;
 }
 
-/* Secondary Button (Used for Check Out) */
+.btn-success { background: #16a34a; color: var(--bg-card); }
+.btn-success:hover { background: #15803d; transform: translateY(-1px); color: var(--bg-card); }
+
+.btn-danger { background: var(--danger); color: var(--bg-card); }
+.btn-danger:hover { background: #b91c1c; transform: translateY(-1px); color: var(--bg-card); }
+
+.btn-warning { background: var(--amber); color: var(--bg-card); }
+.btn-warning:hover { background: #c7851a; transform: translateY(-1px); color: var(--bg-card); }
+
 .btn-secondary {
-    background-color: #6c757d;
-    color: #fff;
-    border: none;
-    padding: 10px 16px; /* SLIGHTLY BIGGER PADDING */
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s, transform 0.1s;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  background: var(--bg-body);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
-.btn-secondary:hover {
-    background-color: #5a6268;
-    transform: translateY(-1px);
-}
+.btn-secondary:hover { background: #e2e8f0; color: var(--text-primary); }
 
-/* Danger Button (Used for Modal Close) */
-.btn-danger {
-    background-color: #dc3545;
-    color: #fff;
-    border: none;
-    padding: 12px 24px; /* Slightly bigger */
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s, transform 0.1s;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+.btn-outline-primary {
+  background: transparent;
+  border: 1.5px solid var(--green-mid);
+  color: var(--green-mid);
 }
-.btn-danger:hover {
-    background-color: #c82333;
-    transform: translateY(-1px);
+.btn-outline-primary:hover { background: var(--green-soft); color: var(--green-dark); }
+
+/* ─── Forms ────────────────────────────────────────────── */
+.form-control,
+input[type="text"],
+input[type="date"],
+input[type="email"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  color: var(--text-primary);
+  background: var(--bg-body);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-
-/* ==========================================================
-    MODAL STYLES (for QR Scanner)
-    ========================================================== */
-.modal {
-    display: none; /* Hidden by default - controlled by JS */
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6); /* Dark overlay */
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    backdrop-filter: blur(3px);
+.form-control:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--green-mid);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(45,134,83,.12);
 }
 
-.modal-content {
-    background-color: #fefefe;
-    padding: 30px;
-    border-radius: 12px;
-    max-width: 450px; /* Slightly wider modal */
-    width: 90%;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    text-align: center;
+textarea { resize: vertical; min-height: 90px; }
+
+/* ─── Alerts ───────────────────────────────────────────── */
+.alert {
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  font-size: .875rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  margin-bottom: 20px;
 }
 
-.modal-content h3 {
-    font-size: 1.7rem;
-    color: #1e293b;
-    margin-bottom: 25px;
+.alert-success { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.alert-danger   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.alert-warning  { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+.alert-info     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+
+/* ─── Page container ───────────────────────────────────── */
+.page-container, .dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 4px;
 }
 
-/* Style for the QR reader container itself */
-#reader {
-    margin: 20px auto;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
+/* ─── Notification items ───────────────────────────────── */
+.notification-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
 
-
-/* 4. Mobile Responsiveness (Card View) for Tables - IMPROVED RESPONSIVE PADDING */
-@media screen and (max-width: 768px) {
-
-    .dashboard-container {
-        margin: 20px auto;
-        padding: 0 10px;
-    }
-
-    /* Force table to behave like stacked divs */
-    .styled-table,
-    .styled-table thead,
-    .styled-table tbody,
-    .styled-table th,
-    .styled-table td,
-    .styled-table tr {
-        display: block;
-    }
-    
-    .styled-table {
-        min-width: unset; /* Allow table to shrink on mobile */
-    }
-
-    /* Hide table headers */
-    .styled-table thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
-
-    .styled-table tr {
-        border: 1px solid #ddd;
-        border-radius: 12px; /* Bigger rounded corners for the card */
-        margin-bottom: 20px; /* INCREASED GAP BETWEEN CARDS */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        background-color: #fff;
-    }
-
-    /* Remove wrapper box shadow on mobile to prevent double shadow */
-    .table-wrapper {
-        box-shadow: none;
-        border: none;
-        background: none;
-    }
-
-    .styled-table td {
-        /* Behave like a row */
-        border: none;
-        border-bottom: 1px solid #f1f5f9;
-        position: relative;
-        padding: 14px 18px 14px 50%; /* INCREASED VERTICAL PADDING for bigger content */
-        text-align: right;
-        font-size: 15px;
-    }
-
-    .styled-table td:last-child {
-        /* This rule now specifically targets the Progress column (6th column) on My Tasks */
-        border-bottom: none;
-    }
-
-    /* Create the data labels using CSS. */
-    .styled-table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 18px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: 700; /* BOLDER LABEL */
-        color: #1e293b; /* Darker label color */
-        font-size: 14px;
-    }
-
-    /* Event Title/First cell styling on mobile */
-    .styled-table td:nth-child(1) {
-        font-size: 1.15rem; /* Slightly larger title */
-        color: #007bff;
-        font-weight: 700;
-    }
-
-    .styled-table tbody tr:hover {
-        background-color: #fff; /* Keep the individual card background white on hover */
-    }
-
-    /* Mobile text alignment fixes for Task Table */
-    .styled-table td:nth-child(5) {
-        text-align: right; /* Revert back to right aligned data */
-    }
-    .styled-table td:nth-child(6) {
-        text-align: right; /* Revert back to right aligned data */
-    }
-}
-/* ==========================================================
-    NOTIFICATIONS PAGE STYLES
-    ========================================================== */
-
-/* 1. Card Container Styles */
-.dashboard-container {
-    max-width: 80% auto;
-    margin: 40px auto;
-    padding: 0 20px;
-    font-family: 'Inter', sans-serif; /* Ensuring a good font */
+.notification-item:hover {
+  border-color: var(--green-light);
+  box-shadow: var(--shadow-sm);
 }
 
-.section-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 30px;
-    border-bottom: 3px solid #007bff;
-    display: inline-block;
-    padding-bottom: 8px;
-    line-height: 1.2;
+.notification-item.unread {
+  border-left: 3px solid var(--green-mid);
+  background: #f8fffe;
 }
 
-.section-title i {
-    color: #007bff;
-    margin-right: 10px;
+.notification-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green-soft);
+  color: var(--green-mid);
+  font-size: .9rem;
+  flex-shrink: 0;
 }
 
-.notification-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e2e8f0;
+/* ─── Footer ───────────────────────────────────────────── */
+.footer {
+  padding: 16px 28px;
+  font-size: .8rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  text-align: center;
 }
 
-.notification-card h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #007bff; /* Primary color for section header */
-    margin-top: 0;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed #eef3ff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* ─── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page-content   { padding: 18px 14px; }
+  .topbar         { padding: 0 14px; }
+  .org-list-grid  { grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); }
+  .styled-table th,
+  .styled-table td{ padding: 10px 12px; }
 }
 
-/* 2. List and Item Styles */
-.notification-card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.notification-card li {
-    padding: 14px 0; /* SLIGHTLY MORE PADDING */
-    border-bottom: 1px solid #f1f5f9;
-    color: #475569;
-    line-height: 1.5;
-    font-size: 15px; /* SLIGHTLY BIGGER FONT */
-    gap: 15px;
-}
-
-.notification-card li:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.notification-card li strong {
-    color: #1e293b;
-    font-weight: 600;
-}
-
-/* --- FIX FOR APPLICATION UPDATES (USING CSS GRID) --- */
-.notification-card:first-of-type li {
-    /* Set up a grid container */
-    display: grid;
-    /* Define columns:
-        1. Auto for static text like "Your application to"
-        2. A maximum width for the dynamic content (event title)
-        3. Auto for the status badge
-        4. Auto for the date information
-        This ensures the descriptive text and date are fixed width, and the title and status align */
-    grid-template-columns: auto 1fr auto auto;
-    gap: 12px; /* INCREASED GAP */
-    align-items: center;
-}
-
-/* Specific styling for the surrounding text in Application Updates to avoid unwanted wrapping */
-.notification-card:first-of-type li > *:not(strong):not(.status) {
-    white-space: nowrap;
-}
-
-
-/* --- FIX FOR UPCOMING EVENTS (USING FLEXBOX) --- */
-/* The second card (Upcoming Approved Events) only needs simple flex to align text and date */
-.notification-card:nth-of-type(2) li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.notification-card:nth-of-type(2) li > * {
-    margin: 0 5px;
-}
-
-/* --- FIX FOR RECENT TASK ASSIGNMENTS (USING FLEXBOX AND SPACING) --- */
-/* This PHP generates non-contiguous text, so we'll use a strong wrapping div if possible,
-    but for the current structure, we'll try to center the content. */
-.notification-card:nth-of-type(3) li {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    align-items: center;
-    gap: 8px; /* SLIGHTLY BIGGER GAP */
-}
-.notification-card:nth-of-type(3) li strong {
-    /* Give the task description a bit more visual weight and space */
-    flex-grow: 1;
-    min-width: 150px;
-    text-align: left;
-}
-
-
-/* 3. Status Badges */
-.status {
-    padding: 6px 10px; /* INCREASED PADDING */
-    border-radius: 6px; /* Slightly rounder */
-    font-weight: 700;
-    font-size: 12px; /* SLIGHTLY BIGGER FONT */
-    line-height: 1;
-    text-transform: uppercase;
-    white-space: nowrap;
-    display: inline-block;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.status.approved {
-    background-color: #10b981; /* Success Green */
-    color: #fff;
-}
-
-.status.rejected {
-    background-color: #dc3545; /* Danger Red */
-    color: #fff;
-}
-
-/* 4. Mobile Responsiveness */
-@media screen and (max-width: 768px) {
-    .dashboard-container {
-        padding: 0 10px;
-        margin: 20px auto;
-    }
-
-    .section-title {
-        font-size: 24px;
-        margin-bottom: 20px;
-    }
-
-    .notification-card {
-        padding: 15px;
-    }
-
-    /* Reset Application Updates to a stacked column layout on mobile */
-    .notification-card:first-of-type li {
-        display: block;
-    }
-
-    /* Force the status and date onto new lines for better readability */
-    .notification-card:first-of-type li > span:not(.status) {
-        display: block;
-        margin-top: 5px;
-    }
-
-    .notification-card:first-of-type li strong {
-        display: inline;
-    }
-
-    /* Ensure status badge is visible and has a little space */
-    .status {
-        margin: 5px 0;
-        font-size: 11px;
-    }
-}
-
-@media screen and (max-width: 500px) {
-    /* Stack Upcoming Events and Task Assignments fully on smaller phones */
-    .notification-card:nth-of-type(2) li,
-    .notification-card:nth-of-type(3) li {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px; /* Slightly bigger gap on the smallest screen */
-    }
+@media (max-width: 480px) {
+  .org-list-grid  { grid-template-columns: 1fr; }
+  .topbar .brand-link span { display: none; }
 }

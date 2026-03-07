@@ -52,15 +52,15 @@ QRcode::png($checkoutData, $checkoutFile, QR_ECLEVEL_L, 6);
     <div style="display:flex; justify-content:center; gap:30px; flex-wrap:wrap;">
         <div>
             <h4>Check-In QR</h4>
-            <img src="<?= $checkinFile ?>" alt="Check-In QR" width="200">
+            <img src="/VolunteerHub/Generator/QRcode Checkin/<?= basename($checkinFile) ?>" alt="Check-In QR" width="200">
             <br>
             <a href="<?= $checkinFile ?>" download class="btn-primary" style="display:inline-block;margin-top:5px;">⬇ Download</a>
         </div>
         <div>
             <h4>Check-Out QR</h4>
-            <img src="<?= $checkoutFile ?>" alt="Check-Out QR" width="200">
+            <img src="/VolunteerHub/Generator/QRcode Checkout/<?= basename($checkoutFile) ?>" alt="Check-Out QR" width="200">
             <br>
-            <a href="<?= $checkoutFile ?>" download class="btn-primary" style="display:inline-block;margin-top:5px;">⬇ Download</a>
+            <a href="/VolunteerHub/Generator/QRcode Checkout/<?= basename($checkoutFile) ?>" download class="btn-primary" style="display:inline-block;margin-top:5px;">⬇ Download</a>
         </div>
     </div>
 </div>
