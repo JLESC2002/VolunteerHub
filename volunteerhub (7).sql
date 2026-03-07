@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 07, 2026 at 03:28 AM
+-- Generation Time: Mar 07, 2026 at 11:01 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -86,6 +86,7 @@ CREATE TABLE `events` (
   `date` date NOT NULL,
   `location` varchar(255) DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
+  `organization_id` int(11) DEFAULT NULL,
   `status` varchar(50) DEFAULT 'Open',
   `latitude` decimal(10,8) DEFAULT NULL,
   `longitude` decimal(11,8) DEFAULT NULL
@@ -95,24 +96,25 @@ CREATE TABLE `events` (
 -- Dumping data for table `events`
 --
 
-INSERT INTO `events` (`id`, `title`, `description`, `date`, `location`, `created_by`, `status`, `latitude`, `longitude`) VALUES
-(2, 'Tree Planting Drive', 'Help us plant trees to create a greener city.', '2025-10-22', 'Riverside Park', 1, 'Completed', NULL, NULL),
-(3, 'Food Drive for Families in Need', 'Assist in collecting and distributing food supplies.', '2025-05-05', 'Community Center', 2, 'Open', NULL, NULL),
-(4, 'Clothing Donation & Distribution', 'Sort and distribute donated clothes to underprivileged families.', '2025-05-15', 'Volunteer Hub Warehouse', 2, 'Open', NULL, NULL),
-(5, 'Blood Donation Camp', 'Organized in collaboration with the city hospital. Donate blood and save lives.', '2025-06-01', 'Red Cross Center', 3, 'Open', NULL, NULL),
-(6, 'Elderly Care Home Visit', 'Spend time with the elderly, play games, and share stories.', '2025-06-20', 'Sunrise Elderly Home', 3, 'Open', NULL, NULL),
-(7, 'Street clean up ', 'cleaning the streets of iloilo', '2025-05-11', 'iloilo', 1, 'Completed', NULL, NULL),
-(8, 'dawdasdaw', 'dasdawdasdaw', '2025-03-17', 'awdasdawd', 19, 'Open', NULL, NULL),
-(9, 'Team Tress', 'plating 1 million trees', '2025-07-28', 'iloilo', 1, 'Completed', NULL, NULL),
-(10, 'Team Trees', 'plant 1 million treee', '2025-06-22', 'iloilo', 1, 'Completed', NULL, NULL),
-(11, 'Gift Giving', 'Giving Gifts to Homeless People', '2025-08-17', 'Iloilo City', 1, 'Completed', NULL, NULL),
-(12, 'Food Donation', 'donate food for the needs', '2025-06-24', 'iloilo', 1, 'Completed', NULL, NULL),
-(15, 'Team Water', 'Help impoverish countries have access to water', '0000-00-00', 'Syria', 1, 'Open', NULL, NULL),
-(16, 'Treee Planting', 'planting trees', '2025-08-30', 'iloilo', 1, 'Open', NULL, NULL),
-(17, 'wsdehkfgajklsdhgfjkha', 'jsdfgliouewhrfgiuahsdikjvh', '2025-11-08', 'ergtsdfgsergtasdfg', 1, 'Open', NULL, NULL),
-(18, 'gift giving ', 'giving gifts to people of mandurriao', '2025-10-30', 'mandurriao iloilo city', 1, 'Open', NULL, NULL),
-(20, 'h235l3hfknsdfhjk', 'nweijk;thjklwerfnkljshtpou234h', '0000-00-00', '0', 1, 'Open', 10.71906800, 122.53570100),
-(21, 'testing', 'testing lng', '2025-11-08', 'Iloilo CIty', 1, 'Open', 10.71883900, 122.53572700);
+INSERT INTO `events` (`id`, `title`, `description`, `date`, `location`, `created_by`, `organization_id`, `status`, `latitude`, `longitude`) VALUES
+(2, 'Tree Planting Drive', 'Help us plant trees to create a greener city.', '2025-10-22', 'Riverside Park', 1, NULL, 'Completed', NULL, NULL),
+(3, 'Food Drive for Families in Need', 'Assist in collecting and distributing food supplies.', '2025-05-05', 'Community Center', 2, NULL, 'Open', NULL, NULL),
+(4, 'Clothing Donation & Distribution', 'Sort and distribute donated clothes to underprivileged families.', '2025-05-15', 'Volunteer Hub Warehouse', 2, NULL, 'Open', NULL, NULL),
+(5, 'Blood Donation Camp', 'Organized in collaboration with the city hospital. Donate blood and save lives.', '2025-06-01', 'Red Cross Center', 3, NULL, 'Open', NULL, NULL),
+(6, 'Elderly Care Home Visit', 'Spend time with the elderly, play games, and share stories.', '2025-06-20', 'Sunrise Elderly Home', 3, NULL, 'Open', NULL, NULL),
+(7, 'Street clean up ', 'cleaning the streets of iloilo', '2025-05-11', 'iloilo', 1, NULL, 'Completed', NULL, NULL),
+(8, 'dawdasdaw', 'dasdawdasdaw', '2025-03-17', 'awdasdawd', 19, NULL, 'Open', NULL, NULL),
+(9, 'Team Tress', 'plating 1 million trees', '2025-07-28', 'iloilo', 1, NULL, 'Completed', NULL, NULL),
+(10, 'Team Trees', 'plant 1 million treee', '2025-06-22', 'iloilo', 1, NULL, 'Completed', NULL, NULL),
+(11, 'Gift Giving', 'Giving Gifts to Homeless People', '2025-08-17', 'Iloilo City', 1, NULL, 'Completed', NULL, NULL),
+(12, 'Food Donation', 'donate food for the needs', '2025-06-24', 'iloilo', 1, NULL, 'Completed', NULL, NULL),
+(15, 'Team Water', 'Help impoverish countries have access to water', '0000-00-00', 'Syria', 1, NULL, 'Open', NULL, NULL),
+(16, 'Treee Planting', 'planting trees', '2025-08-30', 'iloilo', 1, NULL, 'Open', NULL, NULL),
+(17, 'wsdehkfgajklsdhgfjkha', 'jsdfgliouewhrfgiuahsdikjvh', '2025-11-08', 'ergtsdfgsergtasdfg', 1, NULL, 'Open', NULL, NULL),
+(18, 'gift giving ', 'giving gifts to people of mandurriao', '2025-10-30', 'mandurriao iloilo city', 1, NULL, 'Open', NULL, NULL),
+(20, 'h235l3hfknsdfhjk', 'nweijk;thjklwerfnkljshtpou234h', '0000-00-00', '0', 1, NULL, 'Open', 10.71906800, 122.53570100),
+(21, 'testing', 'testing lng', '2025-11-08', 'Iloilo CIty', 1, NULL, 'Open', 10.71883900, 122.53572700),
+(24, 'q2rbw345jnaw46m', 'wn456amw46aw46', '2026-03-07', 'rnq3n4w35J', 1, NULL, 'Ongoing', 12.71804700, 121.19709300);
 
 -- --------------------------------------------------------
 
@@ -336,7 +338,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `session_token`, `profile_pic`) VALUES
-(1, 'CHUA, JOHN LESTER, H.', 'admin@example.com', '$2y$10$BW.3cnu3hwddKYRXJK.dEu/v7ZID4oT5jatWoN.fRV2jKWFR1u7Wu', 'admin', '2025-03-06 07:37:38', '79f204b422de538ae6f79691c0c14887', 'profile_1_1761622372_6900396444099.jpg'),
+(1, 'CHUA, JOHN LESTER, H.', 'admin@example.com', '$2y$10$BW.3cnu3hwddKYRXJK.dEu/v7ZID4oT5jatWoN.fRV2jKWFR1u7Wu', 'admin', '2025-03-06 07:37:38', NULL, 'profile_1_1761622372_6900396444099.jpg'),
 (2, 'Michael Green', 'michael@example.com', 'a1ddceb73d86e5ad202615095280ac88fdb8c4bd80877afbf363b3b0f47a2ad9', 'volunteer', '2025-03-06 07:49:18', NULL, NULL),
 (3, 'Emily Davis', 'emily@example.com', 'a1ddceb73d86e5ad202615095280ac88fdb8c4bd80877afbf363b3b0f47a2ad9', 'volunteer', '2025-03-06 07:49:18', NULL, NULL),
 (4, 'David Wilson', 'david@example.com', 'a1ddceb73d86e5ad202615095280ac88fdb8c4bd80877afbf363b3b0f47a2ad9', 'volunteer', '2025-03-06 07:49:18', NULL, NULL),
@@ -351,7 +353,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `s
 (13, 'Charlotte Lewis', 'charlotte@example.com', 'a1ddceb73d86e5ad202615095280ac88fdb8c4bd80877afbf363b3b0f47a2ad9', 'admin', '2025-03-06 07:49:18', NULL, NULL),
 (14, 'sample', 'sample@gmail.com', '$2y$10$21DlUxHAv1xDNzEgd4g.nehuiOZus/aguJTFUZLcmwbJgtKUrmPvm', 'volunteer', '2025-03-06 08:24:15', NULL, NULL),
 (15, 'chua', 'chua@gmail.com', '$2y$10$gX2dFimyW4j3q1A5ZgSQCO7WeAPbisnz4e/fnn3N5Lw8MaNb59N/C', 'admin', '2025-03-08 02:30:00', NULL, NULL),
-(16, 'CHUA, JOHN LESTER, H.', 'volunteer@example.com', '$2y$10$NdweccHGVzR3PDaNwzld6OikQqgOllAjclxKX549BxJ31HX7WhQ16', 'volunteer', '2025-03-17 09:34:00', '2ddda4d280c659c3ea3303e46663d199', 'volunteer_16_1761629220_69005424a61b2.jpg'),
+(16, 'CHUA, JOHN LESTER, H.', 'volunteer@example.com', '$2y$10$NdweccHGVzR3PDaNwzld6OikQqgOllAjclxKX549BxJ31HX7WhQ16', 'volunteer', '2025-03-17 09:34:00', 'c1e1cdd93b3007c6121fda20e7c28791', 'volunteer_16_1761629220_69005424a61b2.jpg'),
 (17, 'john lester chau', 'chua@sample.com', '$2y$10$epeAYxCEWz/WSOket5/VpeDLhSnscl1m2KxRK7FVZetedFXo4sHbq', 'admin', '2025-03-17 10:43:28', 'e4a5f51ac053c488a60f13c22ff5b3e4', NULL),
 (18, 'lester', 'lnte@lnte.com', '$2y$10$.LhporIbu6wEz48.1bHXcuGmEM2A4ieIjBjjCEtrXCiVRJwkCNrnO', 'admin', '2025-03-17 12:51:38', NULL, NULL),
 (19, 'outa', 'outa@outa.com', '$2y$10$AVp5bP0vebYuq7M/k7ariuescP1ykHl7GMg3.2KtNRIUsNAk6ihf2', 'admin', '2025-03-17 13:11:19', '18dff6cb8ea84103db0a5cf424289141', NULL),
@@ -370,36 +372,37 @@ CREATE TABLE `volunteer_applications` (
   `user_id` int(11) DEFAULT NULL,
   `event_id` int(11) DEFAULT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
-  `applied_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `applied_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `volunteer_applications`
 --
 
-INSERT INTO `volunteer_applications` (`id`, `user_id`, `event_id`, `status`, `applied_at`) VALUES
-(4, 20, 2, 'approved', '2025-04-11 02:30:20'),
-(5, 20, 9, 'approved', '2025-04-11 02:30:22'),
-(6, 14, 7, 'approved', '2025-04-12 08:53:56'),
-(7, 14, 8, 'pending', '2025-04-12 08:54:01'),
-(8, 14, 9, 'approved', '2025-04-12 08:54:02'),
-(9, 14, 10, 'approved', '2025-04-12 08:54:03'),
-(10, 16, 7, 'approved', '2025-04-12 08:55:20'),
-(11, 16, 2, 'rejected', '2025-04-12 08:55:22'),
-(12, 16, 6, 'pending', '2025-04-12 08:55:27'),
-(13, 16, 5, 'pending', '2025-04-12 08:55:30'),
-(15, 16, 11, 'approved', '2025-04-12 08:55:33'),
-(16, 16, 9, 'approved', '2025-04-12 08:55:37'),
-(17, 16, 10, 'approved', '2025-04-12 08:55:38'),
-(19, 16, 8, 'pending', '2025-08-13 10:01:22'),
-(21, 16, 15, 'pending', '2025-08-18 00:31:50'),
-(22, 16, 3, 'pending', '2025-08-18 00:33:19'),
-(23, 16, 16, 'approved', '2025-08-18 03:30:32'),
-(24, 22, 16, 'approved', '2025-08-18 03:32:04'),
-(25, 16, 17, 'approved', '2025-10-18 09:12:27'),
-(26, 16, 4, 'pending', '2025-10-18 09:53:41'),
-(27, 16, 20, 'pending', '2025-10-28 05:10:39'),
-(28, 16, 21, 'approved', '2025-11-05 14:06:10');
+INSERT INTO `volunteer_applications` (`id`, `user_id`, `event_id`, `status`, `applied_at`, `created_at`) VALUES
+(4, 20, 2, 'approved', '2025-04-11 02:30:20', '2026-03-07 09:32:46'),
+(5, 20, 9, 'approved', '2025-04-11 02:30:22', '2026-03-07 09:32:46'),
+(6, 14, 7, 'approved', '2025-04-12 08:53:56', '2026-03-07 09:32:46'),
+(7, 14, 8, 'pending', '2025-04-12 08:54:01', '2026-03-07 09:32:46'),
+(8, 14, 9, 'approved', '2025-04-12 08:54:02', '2026-03-07 09:32:46'),
+(9, 14, 10, 'approved', '2025-04-12 08:54:03', '2026-03-07 09:32:46'),
+(10, 16, 7, 'approved', '2025-04-12 08:55:20', '2026-03-07 09:32:46'),
+(11, 16, 2, 'rejected', '2025-04-12 08:55:22', '2026-03-07 09:32:46'),
+(12, 16, 6, 'pending', '2025-04-12 08:55:27', '2026-03-07 09:32:46'),
+(13, 16, 5, 'pending', '2025-04-12 08:55:30', '2026-03-07 09:32:46'),
+(15, 16, 11, 'approved', '2025-04-12 08:55:33', '2026-03-07 09:32:46'),
+(16, 16, 9, 'approved', '2025-04-12 08:55:37', '2026-03-07 09:32:46'),
+(17, 16, 10, 'approved', '2025-04-12 08:55:38', '2026-03-07 09:32:46'),
+(19, 16, 8, 'pending', '2025-08-13 10:01:22', '2026-03-07 09:32:46'),
+(21, 16, 15, 'pending', '2025-08-18 00:31:50', '2026-03-07 09:32:46'),
+(22, 16, 3, 'pending', '2025-08-18 00:33:19', '2026-03-07 09:32:46'),
+(23, 16, 16, 'approved', '2025-08-18 03:30:32', '2026-03-07 09:32:46'),
+(24, 22, 16, 'approved', '2025-08-18 03:32:04', '2026-03-07 09:32:46'),
+(25, 16, 17, 'approved', '2025-10-18 09:12:27', '2026-03-07 09:32:46'),
+(26, 16, 4, 'pending', '2025-10-18 09:53:41', '2026-03-07 09:32:46'),
+(27, 16, 20, 'pending', '2025-10-28 05:10:39', '2026-03-07 09:32:46'),
+(28, 16, 21, 'approved', '2025-11-05 14:06:10', '2026-03-07 09:32:46');
 
 -- --------------------------------------------------------
 
@@ -539,7 +542,7 @@ ALTER TABLE `dropoff_donations`
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `gcash_donations`
