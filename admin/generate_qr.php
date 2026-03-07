@@ -44,23 +44,32 @@ $checkoutFile = $checkoutDir . "{$event_name}_CheckOut.png";
 QRcode::png($checkinData, $checkinFile, QR_ECLEVEL_L, 6);
 QRcode::png($checkoutData, $checkoutFile, QR_ECLEVEL_L, 6);
 
-// ✅ Output HTML for modal
-?>
-<div style="text-align:center;">
-    <h3>QR Codes for: <?= htmlspecialchars($event['title']) ?></h3>
-
-    <div style="display:flex; justify-content:center; gap:30px; flex-wrap:wrap;">
-        <div>
-            <h4>Check-In QR</h4>
-            <img src="/VolunteerHub/Generator/QRcode Checkin/<?= basename($checkinFile) ?>" alt="Check-In QR" width="200">
-            <br>
-            <a href="<?= $checkinFile ?>" download class="btn-primary" style="display:inline-block;margin-top:5px;">⬇ Download</a>
-        </div>
-        <div>
-            <h4>Check-Out QR</h4>
-            <img src="/VolunteerHub/Generator/QRcode Checkout/<?= basename($checkoutFile) ?>" alt="Check-Out QR" width="200">
-            <br>
-            <a href="/VolunteerHub/Generator/QRcode Checkout/<?= basename($checkoutFile) ?>" download class="btn-primary" style="display:inline-block;margin-top:5px;">⬇ Download</a>
+// ── Output: JSON (for modal JS) or legacy HTML ──────────
+if (!empty($_GET['json'])) {
+    // Return JSON status so the modal can show previews and wire up PDF link
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success'      => true,
+        'checkin_url'  => '/VolunteerHub/Generator/QRcode Checkin/'  . basename($checkinFile),
+        'checkout_url' => '/VolunteerHub/Generator/QRcode Checkout/' . basename($checkoutFile),
+    ]);
+} else {
+    // Legacy HTML output (kept for backwards compatibility)
+    ?>
+    <div style="text-align:center;">
+        <h3>QR Codes for: <?= htmlspecialchars($event['title']) ?></h3>
+        <div style="display:flex;justify-content:center;gap:30px;flex-wrap:wrap;">
+            <div>
+                <h4>Check-In QR</h4>
+                <img src="/VolunteerHub/Generator/QRcode Checkin/<?= basename($checkinFile) ?>"
+                     alt="Check-In QR" width="200">
+            </div>
+            <div>
+                <h4>Check-Out QR</h4>
+                <img src="/VolunteerHub/Generator/QRcode Checkout/<?= basename($checkoutFile) ?>"
+                     alt="Check-Out QR" width="200">
+            </div>
         </div>
     </div>
-</div>
+    <?php
+}

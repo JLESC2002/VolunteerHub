@@ -729,6 +729,16 @@ if ($selected_event_id) {
   background: linear-gradient(135deg, #ef4444, #b91c1c);
   box-shadow: 0 2px 7px rgba(220,38,38,.25);
 }
+
+/* ── QR PDF download link ──────────────────────────── */
+#qrPdfLink {
+  transition: all .18s ease;
+}
+#qrPdfLink:hover {
+  background: linear-gradient(135deg, #4caf80, #2d8653) !important;
+  box-shadow: 0 5px 16px rgba(45,134,83,.35) !important;
+  transform: translateY(-1px);
+}
 </style>
 
 <div class="mt-page">
@@ -1125,14 +1135,50 @@ if ($selected_event_id) {
     </button>
     <p class="mt-modal-title"><i class="fas fa-qrcode"></i> Event QR Codes</p>
 
-    <!-- QR content injected here by openQRModal() -->
-    <div id="qrContent"
-         style="text-align:center;min-height:100px;display:flex;align-items:center;
-                justify-content:center;flex-direction:column;">
+    <!-- Loading state -->
+    <div id="qrLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:12px;">
+      <i class="fas fa-spinner fa-spin fa-2x" style="color:#2d8653;"></i>
+      <span style="font-size:.9rem;color:#94a3b8;">Generating QR codes…</span>
     </div>
 
-    <div class="mt-modal-footer" style="justify-content:center;margin-top:20px;">
-      <button class="mt-modal-cancel primary" onclick="closeModal('qrModal')">
+    <!-- Ready state: QR previews + PDF download -->
+    <div id="qrReady" style="display:none;">
+      <div style="display:flex;justify-content:center;align-items:flex-start;gap:24px;flex-wrap:wrap;padding:20px 0;">
+        <div style="text-align:center;">
+          <h5 style="font-size:.85rem;font-weight:700;color:#1a1f2e;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">Check-In QR</h5>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;width:160px;">
+            <img id="qrCheckinImg" src="" alt="Check-In QR" style="width:100%;height:auto;display:block;">
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <h5 style="font-size:.85rem;font-weight:700;color:#1a1f2e;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">Check-Out QR</h5>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;width:160px;">
+            <img id="qrCheckoutImg" src="" alt="Check-Out QR" style="width:100%;height:auto;display:block;">
+          </div>
+        </div>
+      </div>
+      <p style="font-size:.8rem;color:#64748b;text-align:center;margin:16px 0 0;">
+        <i class="fas fa-info-circle" style="margin-right:5px;color:#2d8653;"></i>
+        Click below to download a printable PDF with both QR codes ready to print and cut.
+      </p>
+    </div>
+
+    <!-- Error state -->
+    <div id="qrError" style="display:none;padding:24px;background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;">
+      <p style="font-size:.9rem;color:#dc2626;margin:0 0 8px;font-weight:600;">
+        <i class="fas fa-circle-exclamation" style="margin-right:6px;"></i> Failed to Generate QR Codes
+      </p>
+      <p id="qrErrorMsg" style="font-size:.8rem;color:#991b1b;margin:0 0 12px;"></p>
+      <button type="button" onclick="retryQR()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;">
+        <i class="fas fa-redo" style="margin-right:5px;"></i> Retry
+      </button>
+    </div>
+
+    <div class="mt-modal-footer" style="justify-content:space-between;margin-top:20px;">
+      <a id="qrPdfLink" href="#" download style="padding:10px 24px;background:linear-gradient(135deg, #2d8653, #1a5c3a);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(45,134,83,.25);transition:all .18s ease;text-transform:none;">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </a>
+      <button type="button" class="mt-modal-cancel primary" onclick="closeModal('qrModal')">
         <i class="fas fa-check-circle"></i> Done
       </button>
     </div>
@@ -1210,36 +1256,54 @@ function openDeleteModal(taskId, desc) {
 }
 
 // ── QR modal
-function openQRModal(eventId) {
-  // Show modal immediately with a proper spinner
-  document.getElementById('qrContent').innerHTML =
-    '<div style="padding:32px 0;display:flex;flex-direction:column;align-items:center;gap:12px;">' +
-      '<i class="fas fa-spinner fa-spin fa-2x" style="color:#2d8653;"></i>' +
-      '<span style="font-size:.845rem;color:#94a3b8;">Loading QR codes…</span>' +
-    '</div>';
-  openModal('qrModal');
+// ── QR modal — generates QR PNGs via generate_qr.php,
+//               then sets up the PDF download link
+let _currentQrEventId = null;
 
-  fetch('generate_qr.php?event_id=' + encodeURIComponent(eventId))
-    .then(function(r) {
-      if (!r.ok) throw new Error('Server responded with status ' + r.status);
-      return r.text();
-    })
-    .then(function(html) {
-      // Safety check: if the server returned an error string instead of HTML
-      if (!html || html.trim() === '') throw new Error('Empty response from server.');
-      document.getElementById('qrContent').innerHTML = html;
-    })
-    .catch(function(err) {
-      document.getElementById('qrContent').innerHTML =
-        '<div style="padding:24px;text-align:center;">' +
-          '<i class="fas fa-circle-exclamation fa-2x" style="color:#dc2626;margin-bottom:10px;display:block;"></i>' +
-          '<p style="font-size:.875rem;color:#1a1f2e;font-weight:600;margin:0 0 6px;">Could not load QR codes.</p>' +
-          '<p style="font-size:.8rem;color:#94a3b8;margin:0;">Make sure the event has coordinates set. ' +
-          '<br><small>' + err.message + '</small></p>' +
-        '</div>';
-    });
+function openQRModal(eventId) {
+  _currentQrEventId = eventId;
+  _loadQR(eventId);
 }
 
+function retryQR() {
+  if (_currentQrEventId) _loadQR(_currentQrEventId);
+}
+
+function _loadQR(eventId) {
+  // Reset to loading state
+  document.getElementById('qrLoading').style.display = 'flex';
+  document.getElementById('qrReady').style.display   = 'none';
+  document.getElementById('qrError').style.display   = 'none';
+  openModal('qrModal');
+
+  // generate_qr.php creates the PNG files server-side and returns a JSON status
+  fetch('generate_qr.php?event_id=' + encodeURIComponent(eventId) + '&json=1')
+    .then(r => {
+      if (!r.ok) throw new Error('Server error ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      if (!data.success) throw new Error(data.message || 'Generation failed.');
+
+      // Show preview images (add cache-busting timestamp)
+      const ts = Date.now();
+      document.getElementById('qrCheckinImg').src  = data.checkin_url  + '?t=' + ts;
+      document.getElementById('qrCheckoutImg').src = data.checkout_url + '?t=' + ts;
+
+      // Wire up the PDF download link
+      document.getElementById('qrPdfLink').href =
+        'generate_qr_pdf.php?event_id=' + encodeURIComponent(eventId);
+
+      // Transition to ready state
+      document.getElementById('qrLoading').style.display = 'none';
+      document.getElementById('qrReady').style.display   = 'block';
+    })
+    .catch(err => {
+      document.getElementById('qrLoading').style.display = 'none';
+      document.getElementById('qrErrorMsg').textContent  = err.message;
+      document.getElementById('qrError').style.display   = 'block';
+    });
+}
 // ── Inline edit
 document.querySelectorAll('.editTaskBtn').forEach(btn => {
   btn.addEventListener('click', function (e) {
