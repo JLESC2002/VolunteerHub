@@ -814,10 +814,18 @@ if ($selected_event_id) {
               Status: <strong style="color:#1a1f2e;"><?= htmlspecialchars($event_data['status']) ?></strong>
             </div>
           </div>
-          <button class="mt-add-btn" style="width:100%;margin-top:14px;justify-content:center;"
-                  onclick="openModal('qrModal')">
-            <i class="fas fa-qrcode"></i> Generate QR Codes
-          </button>
+            <?php
+            // Check if QR files already exist for this event
+            $event_name_safe = preg_replace('/[^A-Za-z0-9_\-]/', '_', $event_data['title']);
+            $checkinPath  = "../Generator/QRcode Checkin/{$event_name_safe}_CheckIn.png";
+            $checkoutPath = "../Generator/QRcode Checkout/{$event_name_safe}_CheckOut.png";
+            $qr_exists    = file_exists($checkinPath) && file_exists($checkoutPath);
+            ?>
+            <button class="mt-add-btn" style="width:100%;margin-top:14px;justify-content:center;"
+                    onclick="openQRModal(<?= intval($event_data['id']) ?>)">
+              <i class="fas fa-qrcode"></i>
+              <?= $qr_exists ? 'View QR Codes' : 'Generate QR Codes' ?>
+            </button>
         </div>
       </div>
       <?php endif; ?>
@@ -1091,18 +1099,25 @@ if ($selected_event_id) {
 </div>
 
 <!-- ── Modal: QR Codes ──────────────────────────────────── -->
+<!-- ── Modal: QR Codes ──────────────────────────────────── -->
 <div id="qrModal" class="mt-modal">
   <div class="mt-modal-backdrop" onclick="closeModal('qrModal')"></div>
-  <div class="mt-modal-box" style="max-width:560px;">
+  <div class="mt-modal-box" style="max-width:620px;">
     <button class="mt-modal-close" onclick="closeModal('qrModal')">
       <i class="fas fa-times"></i>
     </button>
     <p class="mt-modal-title"><i class="fas fa-qrcode"></i> Event QR Codes</p>
-    <div id="qrContent" style="text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center;">
-      <p style="color:#94a3b8;font-size:.845rem;">Loading QR codes…</p>
+
+    <!-- QR content injected here by openQRModal() -->
+    <div id="qrContent"
+         style="text-align:center;min-height:100px;display:flex;align-items:center;
+                justify-content:center;flex-direction:column;">
     </div>
-    <div class="mt-modal-footer" style="justify-content:center;">
-      <button class="mt-modal-cancel" onclick="closeModal('qrModal')">Close</button>
+
+    <div class="mt-modal-footer" style="justify-content:center;margin-top:18px;">
+      <button class="mt-modal-cancel" onclick="closeModal('qrModal')">
+        <i class="fas fa-times" style="margin-right:5px;"></i> Close
+      </button>
     </div>
   </div>
 </div>
@@ -1179,11 +1194,33 @@ function openDeleteModal(taskId, desc) {
 
 // ── QR modal
 function openQRModal(eventId) {
-  document.getElementById('qrContent').innerHTML = '<p style="color:#94a3b8;font-size:.845rem;">Loading…</p>';
+  // Show modal immediately with a proper spinner
+  document.getElementById('qrContent').innerHTML =
+    '<div style="padding:32px 0;display:flex;flex-direction:column;align-items:center;gap:12px;">' +
+      '<i class="fas fa-spinner fa-spin fa-2x" style="color:#2d8653;"></i>' +
+      '<span style="font-size:.845rem;color:#94a3b8;">Loading QR codes…</span>' +
+    '</div>';
   openModal('qrModal');
-  fetch(`generate_qr.php?event_id=${eventId}`)
-    .then(r => r.text())
-    .then(html => { document.getElementById('qrContent').innerHTML = html; });
+
+  fetch('generate_qr.php?event_id=' + encodeURIComponent(eventId))
+    .then(function(r) {
+      if (!r.ok) throw new Error('Server responded with status ' + r.status);
+      return r.text();
+    })
+    .then(function(html) {
+      // Safety check: if the server returned an error string instead of HTML
+      if (!html || html.trim() === '') throw new Error('Empty response from server.');
+      document.getElementById('qrContent').innerHTML = html;
+    })
+    .catch(function(err) {
+      document.getElementById('qrContent').innerHTML =
+        '<div style="padding:24px;text-align:center;">' +
+          '<i class="fas fa-circle-exclamation fa-2x" style="color:#dc2626;margin-bottom:10px;display:block;"></i>' +
+          '<p style="font-size:.875rem;color:#1a1f2e;font-weight:600;margin:0 0 6px;">Could not load QR codes.</p>' +
+          '<p style="font-size:.8rem;color:#94a3b8;margin:0;">Make sure the event has coordinates set. ' +
+          '<br><small>' + err.message + '</small></p>' +
+        '</div>';
+    });
 }
 
 // ── Inline edit
