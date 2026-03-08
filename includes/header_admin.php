@@ -11,8 +11,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='system-ui, -apple-system, sans-serif'>🌿</text></svg>">
 
-  <link href="../../includes/css/bootstrap.min.css" rel="stylesheet">
-  <link href="../../includes/css/all.min.css" rel="stylesheet">
+  <link href="../includes/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../includes/css/all.min.css" rel="stylesheet">
 
   <?php
   $currentPage = basename($_SERVER['PHP_SELF']);
