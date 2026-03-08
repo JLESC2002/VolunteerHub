@@ -8,7 +8,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='system-ui, -apple-system, sans-serif'>🌿</text></svg>">
   
-  <link rel="stylesheet" href="includes/styles/index_styles.css">
+  <link rel="stylesheet" href="styles/index_styles.css">
   <link rel="stylesheet" href="includes/css/all.min.css">
   <style>
     /* Logout success notification */
@@ -120,8 +120,8 @@
     <p class="subtitle">Empowering communities through volunteer connections.</p>
 
     <div class="button-group">
-      <a href="volunteer/pages/volunteer_login.php" class="btn-primary">Login as Volunteer</a>
-      <a href="admin/pages/admin_login.php" class="btn-primary">Login as Admin</a>
+      <a href="volunteer/volunteer_login.php" class="btn-primary">Login as Volunteer</a>
+      <a href="admin/admin_login.php" class="btn-primary">Login as Admin</a>
       <a href="register.php" class="btn-secondary">Register</a>
     </div>
 
