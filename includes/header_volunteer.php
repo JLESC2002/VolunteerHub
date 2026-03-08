@@ -70,6 +70,12 @@ if (session_status() === PHP_SESSION_NONE) session_start();
       </a>
     </li>
     <li class="nav-item">
+      <a href="/VolunteerHub/volunteer/application_history.php"
+         class="nav-link <?= ($currentPage === 'application_history.php') ? 'active' : '' ?>">
+        <i class="fas fa-clipboard-list"></i> Application History
+      </a>
+    </li>
+    <li class="nav-item">
       <a href="/VolunteerHub/volunteer/notifications.php"
          class="nav-link <?= ($currentPage === 'notifications.php') ? 'active' : '' ?>">
         <i class="fas fa-bell"></i> Notifications

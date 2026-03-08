@@ -94,6 +94,15 @@ switch ($pw_status) {
 
     <!-- Form -->
     <form method="POST" action="<?= htmlspecialchars($pw_action) ?>" id="changePasswordForm" novalidate>
+      <!-- FIXED: Hidden username field — required by browsers for password managers -->
+<input type="text"
+       name="username"
+       id="pw_username_hint"
+       value="<?= htmlspecialchars($admin['email'] ?? $_SESSION['user_email'] ?? '') ?>"
+       autocomplete="username"
+       aria-hidden="true"
+       tabindex="-1"
+       style="display:none;">
 
       <div style="margin-bottom:14px;">
         <label class="pw-label">Current Password</label>

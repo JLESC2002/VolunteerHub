@@ -7,6 +7,27 @@ include '../includes/header_admin.php';
 
 $admin_id = $_SESSION['user_id'];
 
+/* ── Handle profile info update (name + email) ─────────── */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile_info'])) {
+    $new_name  = trim($_POST['admin_name']  ?? '');
+    $new_email = trim($_POST['admin_email'] ?? '');
+    if (empty($new_name) || empty($new_email)) {
+        header('Location: admin_profile.php?profile_status=empty'); exit;
+    }
+    if (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+        header('Location: admin_profile.php?profile_status=invalid_email'); exit;
+    }
+    $upd = $conn->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
+    $upd->bind_param("ssi", $new_name, $new_email, $admin_id);
+    if ($upd->execute()) {
+        $upd->close();
+        header('Location: admin_profile.php?profile_status=success'); exit;
+    } else {
+        $upd->close();
+        header('Location: admin_profile.php?profile_status=db_error'); exit;
+    }
+}
+
 $stmt = $conn->prepare("SELECT name, email, created_at, profile_pic FROM users WHERE id = ?");
 $stmt->bind_param("i", $admin_id);
 $stmt->execute();
@@ -23,573 +44,318 @@ $stmt = $conn->prepare("
 $stmt->bind_param("i", $admin_id);
 $stmt->execute();
 $organization = $stmt->get_result()->fetch_assoc();
+
+/* ── Status flags ───────────────────────────────────────── */
+$profile_status = $_GET['profile_status'] ?? '';
+$org_success    = $_GET['success']        ?? '';
+$org_error      = $_GET['error']          ?? '';
 ?>
 
 <style>
-/* ═══════════════════════════════════════════════════════
-   Admin Profile — Page Styles
-   ═══════════════════════════════════════════════════════ */
-
+/* ═══════════════════════════════════════════════════════════
+   Admin Profile — Styles
+   ═══════════════════════════════════════════════════════════ */
 .ap-page { padding: 24px 28px 56px; }
 
-/* ── Page header ──────────────────────────────────────── */
+/* Page header */
 .ap-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
 }
 .ap-page-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 0;
+  font-size: 1.35rem; font-weight: 700; color: #1a1f2e;
+  display: flex; align-items: center; gap: 9px; margin: 0;
 }
 .ap-page-title i { color: #2d8653; }
 
-/* ── Alert banners ────────────────────────────────────── */
+/* Alerts */
 .ap-alert {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  border-radius: 9px;
-  font-size: .845rem;
-  font-weight: 500;
-  border: 1px solid transparent;
-  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px; border-radius: 9px; font-size: .845rem;
+  font-weight: 500; border: 1px solid transparent; margin-bottom: 18px;
 }
-.ap-alert-success { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-.ap-alert-error   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.ap-alert-success { background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+.ap-alert-error   { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
 
-/* ── Two-column layout ────────────────────────────────── */
+/* Two-column layout */
 .ap-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
-  align-items: start;
+  display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start;
 }
-@media (max-width: 900px) {
-  .ap-layout { grid-template-columns: 1fr; }
-}
+@media (max-width: 900px) { .ap-layout { grid-template-columns: 1fr; } }
 
-/* ── Card base ────────────────────────────────────────── */
+/* Card base */
 .ap-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  overflow: hidden;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05); overflow: hidden;
 }
 .ap-card + .ap-card { margin-top: 18px; }
-
 .ap-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafbfc;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; border-bottom: 1px solid #f1f5f9; background: #fafbfc;
 }
 .ap-card-header h6 {
-  font-size: .82rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+  font-size: .82rem; font-weight: 700; color: #1a1f2e;
+  text-transform: uppercase; letter-spacing: .05em; margin: 0;
+  display: flex; align-items: center; gap: 7px;
 }
 .ap-card-header h6 i { color: #2d8653; font-size: .78rem; }
 .ap-card-body { padding: 18px; }
 
-/* ── LEFT COLUMN: Profile identity card ──────────────── */
+/* Identity card */
 .ap-identity {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 18px 20px;
-  text-align: center;
-  gap: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 18px 20px; text-align: center;
 }
-
-/* Avatar */
 .ap-avatar-ring {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin-bottom: 14px;
-  cursor: pointer;
-  flex-shrink: 0;
+  position: relative; width: 80px; height: 80px; margin-bottom: 14px;
+  cursor: pointer; flex-shrink: 0;
 }
 .ap-avatar-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
   border: 3px solid #fff;
   box-shadow: 0 0 0 3px #e8f5ee, 0 4px 14px rgba(45,134,83,.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #e8f5ee, #c3e6d0);
-  overflow: hidden;
-  transition: box-shadow .2s;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg,#e8f5ee,#c3e6d0); overflow: hidden; transition: box-shadow .2s;
 }
-.ap-avatar-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ap-avatar-img img { width:100%; height:100%; object-fit:cover; display:block; }
 .ap-avatar-img .fa-user-circle { font-size: 3.5rem; color: #4caf80; }
 .ap-avatar-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(26,92,58,.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity .2s;
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(26,92,58,.5); display: flex; align-items: center;
+  justify-content: center; opacity: 0; transition: opacity .2s;
 }
 .ap-avatar-ring:hover .ap-avatar-overlay { opacity: 1; }
 .ap-avatar-overlay i { color: #fff; font-size: .95rem; }
 
-/* Name + role */
-.ap-identity-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  margin: 0 0 4px;
-  line-height: 1.3;
-}
+.ap-identity-name { font-size: 1.05rem; font-weight: 700; color: #1a1f2e; margin: 0 0 4px; }
 .ap-identity-role {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #e8f5ee;
-  color: #1a5c3a;
-  font-size: .72rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 99px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  margin-bottom: 14px;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #e8f5ee; color: #1a5c3a; font-size: .72rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px; text-transform: uppercase;
+  letter-spacing: .04em; margin-bottom: 14px;
 }
-
-/* Meta list */
 .ap-meta-list {
-  width: 100%;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
+  width: 100%; border-top: 1px solid #f1f5f9; padding-top: 14px;
+  display: flex; flex-direction: column; gap: 9px;
 }
-.ap-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: .8rem;
-  color: #4a5568;
-  text-align: left;
-}
+.ap-meta-row { display: flex; align-items: center; gap: 9px; font-size: .8rem; color: #4a5568; text-align: left; }
 .ap-meta-row i {
-  width: 28px;
-  height: 28px;
-  background: #f1f5f9;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2d8653;
-  font-size: .75rem;
-  flex-shrink: 0;
+  width: 28px; height: 28px; background: #f1f5f9; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: #2d8653; font-size: .75rem; flex-shrink: 0;
 }
 .ap-meta-row span { word-break: break-all; line-height: 1.35; }
 
-/* ── LEFT COLUMN: Org logo card ──────────────────────── */
-.ap-org-logo-card .ap-card-body {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-}
-.ap-org-logo-wrap {
-  position: relative;
-  flex-shrink: 0;
-  cursor: pointer;
-}
+/* Org logo card */
+.ap-org-logo-wrap { position: relative; flex-shrink: 0; cursor: pointer; }
 .ap-org-logo-img {
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 1px 5px rgba(0,0,0,.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  overflow: hidden;
-  transition: box-shadow .2s;
+  width: 52px; height: 52px; border-radius: 10px; object-fit: cover;
+  border: 2px solid #e2e8f0; box-shadow: 0 1px 5px rgba(0,0,0,.08);
+  display: flex; align-items: center; justify-content: center;
+  background: #f1f5f9; overflow: hidden;
 }
-.ap-org-logo-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ap-org-logo-img img { width:100%; height:100%; object-fit:cover; display:block; }
 .ap-org-logo-img .fa-image { font-size: 1.4rem; color: #94a3b8; }
 .ap-org-logo-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  background: rgba(26,92,58,.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity .2s;
+  position: absolute; inset: 0; border-radius: 10px;
+  background: rgba(26,92,58,.5); display: flex; align-items: center;
+  justify-content: center; opacity: 0; transition: opacity .2s;
 }
 .ap-org-logo-wrap:hover .ap-org-logo-overlay { opacity: 1; }
 .ap-org-logo-overlay i { color: #fff; font-size: .85rem; }
-.ap-org-logo-info { flex: 1; min-width: 0; }
-.ap-org-logo-name {
-  font-size: .875rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  margin: 0 0 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ap-org-logo-loc {
-  font-size: .78rem;
-  color: #64748b;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.ap-org-logo-name { font-size:.875rem; font-weight:700; color:#1a1f2e; margin:0 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ap-org-logo-loc { font-size:.78rem; color:#64748b; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ── RIGHT COLUMN: Tab navigation ────────────────────── */
+/* Tabs */
 .ap-tabs {
-  display: flex;
-  border-bottom: 2px solid #f1f5f9;
-  margin-bottom: 0;
-  background: #fafbfc;
-  border-radius: 14px 14px 0 0;
-  overflow: hidden;
-  gap: 0;
+  display: flex; border-bottom: 2px solid #f1f5f9; background: #fafbfc;
+  border-radius: 14px 14px 0 0; overflow: hidden;
 }
 .ap-tab {
-  flex: 1;
-  padding: 12px 10px;
-  font-size: .8rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  flex: 1; padding: 12px 10px; font-size: .8rem; font-weight: 700;
+  color: #64748b; text-transform: uppercase; letter-spacing: .04em;
+  border: none; background: transparent; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
   transition: color .15s, border-color .15s, background .15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
 }
 .ap-tab:hover { background: #f0f4f8; color: #1a1f2e; }
-.ap-tab.active {
-  color: #2d8653;
-  border-bottom-color: #2d8653;
-  background: #fff;
-}
+.ap-tab.active { color: #2d8653; border-bottom-color: #2d8653; background: #fff; }
 .ap-tab i { font-size: .78rem; }
-
-/* Tab panels */
 .ap-tab-panel { display: none; }
 .ap-tab-panel.active { display: block; }
 
-/* ── Form sections ────────────────────────────────────── */
+/* Section labels */
 .ap-section-label {
-  font-size: .72rem;
-  font-weight: 700;
-  color: #2d8653;
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 0 8px;
-  border-bottom: 1.5px solid #e8f5ee;
-  margin: 0 0 14px;
+  font-size: .72rem; font-weight: 700; color: #2d8653; text-transform: uppercase;
+  letter-spacing: .07em; display: flex; align-items: center; gap: 7px;
+  padding: 0 0 8px; border-bottom: 1.5px solid #e8f5ee; margin: 0 0 14px;
 }
-.ap-section-label i { font-size: .7rem; }
 
-/* ── Form grid ────────────────────────────────────────── */
-.ap-form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 13px;
-  margin-bottom: 16px;
-}
+/* Form grid */
+.ap-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 13px; margin-bottom: 16px; }
 .ap-fg { display: flex; flex-direction: column; gap: 5px; }
 .ap-fg.span2 { grid-column: 1 / -1; }
 
-.ap-fg label {
-  font-size: .72rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: .05em;
+/* ── FIXED: All labels use proper for= attribute ── */
+.ap-fg label,
+.ap-edit-field label {
+  font-size: .72rem; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: .05em;
 }
 .ap-fg input,
 .ap-fg textarea,
 .ap-fg select {
-  padding: 9px 12px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font: inherit;
-  font-size: .875rem;
-  color: #1a1f2e;
-  background: #f8fafc;
-  outline: none;
-  transition: border-color .18s, box-shadow .18s, background .18s;
-  appearance: none;
-  -webkit-appearance: none;
+  padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  font: inherit; font-size: .875rem; color: #1a1f2e; background: #f8fafc;
+  outline: none; transition: border-color .18s, box-shadow .18s;
+  appearance: none; -webkit-appearance: none;
 }
 .ap-fg input:focus,
-.ap-fg textarea:focus,
-.ap-fg select:focus {
-  border-color: #2d8653;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(45,134,83,.1);
+.ap-fg textarea:focus { border-color: #2d8653; background: #fff; box-shadow: 0 0 0 3px rgba(45,134,83,.1); }
+
+/* Read-only state for locked fields */
+.ap-fg input[readonly],
+.ap-fg textarea[readonly] {
+  background: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #e2e8f0;
 }
-.ap-fg input[type="file"] {
-  background: #f8fafc;
-  padding: 7px 10px;
-  cursor: pointer;
-  font-size: .8rem;
-  color: #4a5568;
-}
+.ap-fg input[type="file"] { background:#f8fafc; padding:7px 10px; cursor:pointer; font-size:.8rem; color:#4a5568; }
 .ap-fg textarea { resize: vertical; min-height: 72px; }
-.ap-fg-hint {
-  font-size: .72rem;
-  color: #94a3b8;
-  margin-top: 3px;
-}
+.ap-fg-hint { font-size: .72rem; color: #94a3b8; margin-top: 3px; }
 
-/* ── Payment blocks ───────────────────────────────────── */
-.ap-pay-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 13px;
-  margin-bottom: 16px;
-}
-.ap-pay-block {
-  background: #f8fafc;
-  border: 1px solid #e9eef5;
-  border-radius: 10px;
-  padding: 14px 16px;
-}
+/* Payment blocks */
+.ap-pay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 13px; margin-bottom: 16px; }
+.ap-pay-block { background: #f8fafc; border: 1px solid #e9eef5; border-radius: 10px; padding: 14px 16px; }
 .ap-pay-block-title {
-  font-size: .72rem;
-  font-weight: 700;
-  color: #2d8653;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 11px;
+  font-size: .72rem; font-weight: 700; color: #2d8653; text-transform: uppercase;
+  letter-spacing: .05em; display: flex; align-items: center; gap: 6px; margin-bottom: 11px;
 }
-.ap-pay-block-title i { font-size: .7rem; }
+.ap-qr-row { display:flex; align-items:center; gap:12px; margin-top:8px; padding-top:10px; border-top:1px solid #e9eef5; }
+.ap-qr-thumb { width:56px; height:56px; border-radius:8px; border:1px solid #e2e8f0; object-fit:cover; flex-shrink:0; }
+.ap-qr-label { font-size:.75rem; color:#64748b; line-height:1.4; }
 
-/* QR preview inline */
-.ap-qr-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-  padding-top: 10px;
-  border-top: 1px solid #e9eef5;
-}
-.ap-qr-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-.ap-qr-label {
-  font-size: .75rem;
-  color: #64748b;
-  line-height: 1.4;
-}
-
-/* ── Save bar ─────────────────────────────────────────── */
+/* Save bar */
 .ap-save-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
-  margin-top: 6px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding-top: 16px; border-top: 1px solid #f1f5f9; margin-top: 6px;
 }
+.ap-save-bar-right { display:flex; align-items:center; gap:8px; }
 .ap-btn-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 22px;
-  background: linear-gradient(135deg, #2d8653, #1a5c3a);
-  color: #fff;
-  border: none;
-  border-radius: 9px;
-  font: inherit;
-  font-size: .875rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity .15s, transform .15s;
-  box-shadow: 0 2px 8px rgba(45,134,83,.28);
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 22px; background: linear-gradient(135deg,#2d8653,#1a5c3a);
+  color: #fff; border: none; border-radius: 9px; font: inherit;
+  font-size: .875rem; font-weight: 700; cursor: pointer;
+  transition: opacity .15s, transform .15s; box-shadow: 0 2px 8px rgba(45,134,83,.28);
 }
 .ap-btn-save:hover { opacity: .9; transform: translateY(-1px); }
+.ap-btn-cancel {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 18px; background: #f1f5f9; color: #374151;
+  border: 1.5px solid #e2e8f0; border-radius: 9px; font: inherit;
+  font-size: .875rem; font-weight: 700; cursor: pointer; transition: background .15s;
+}
+.ap-btn-cancel:hover { background: #e2e8f0; }
+.ap-btn-edit {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 22px; background: #fff; color: #1a5c3a;
+  border: 1.5px solid #2d8653; border-radius: 9px; font: inherit;
+  font-size: .875rem; font-weight: 700; cursor: pointer; transition: all .15s;
+}
+.ap-btn-edit:hover { background: #e8f5ee; }
 
-/* ── Modals ───────────────────────────────────────────── */
-.ap-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 1300;
+/* Locked overlay hint */
+.ap-locked-hint {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .78rem; color: #94a3b8; font-style: italic;
 }
-.ap-modal.show {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ap-locked-hint i { font-size: .75rem; }
+
+/* Edit-profile button in left card header */
+.ap-btn-edit-profile {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; background: #f1f5f9; color: #374151;
+  border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: .75rem;
+  font-weight: 700; cursor: pointer; transition: background .15s, color .15s;
 }
-.ap-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(6,10,17,.45);
-  backdrop-filter: blur(5px);
+.ap-btn-edit-profile:hover { background: #e8f5ee; color: #1a5c3a; border-color: #bbf7d0; }
+
+/* Edit form fields (left column) */
+.ap-edit-field { width: 100%; margin-bottom: 10px; text-align: left; }
+.ap-edit-field label { display: block; font-size: .72rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.ap-edit-field input {
+  width: 100%; padding: 9px 13px; font-size: .875rem; color: #1a1f2e;
+  background: #f7fafc; border: 1.5px solid #d1d5db; border-radius: 9px;
+  outline: none; transition: border-color .2s, box-shadow .2s; box-sizing: border-box;
 }
+.ap-edit-field input:focus { border-color:#2d8653; box-shadow:0 0 0 3px rgba(45,134,83,.13); background:#fff; }
+.ap-edit-actions { display:flex; gap:8px; width:100%; margin-top:4px; margin-bottom:6px; }
+.ap-btn-save-profile {
+  flex:1; padding:8px 14px; background:linear-gradient(135deg,#2d8653,#1a5c3a);
+  color:#fff; border:none; border-radius:9px; font-size:.82rem; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:opacity .15s;
+}
+.ap-btn-save-profile:hover { opacity:.88; }
+.ap-btn-cancel-profile {
+  padding:8px 14px; background:#f1f5f9; color:#374151; border:1.5px solid #e2e8f0;
+  border-radius:9px; font-size:.82rem; font-weight:700; cursor:pointer; transition:background .15s;
+}
+.ap-btn-cancel-profile:hover { background:#e2e8f0; }
+
+/* Modals */
+.ap-modal { display:none; position:fixed; inset:0; z-index:1300; }
+.ap-modal.show { display:flex; align-items:center; justify-content:center; }
+.ap-modal-backdrop { position:fixed; inset:0; background:rgba(6,10,17,.45); backdrop-filter:blur(5px); }
 .ap-modal-box {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 16px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 26px 22px 20px;
-  box-shadow: 0 16px 48px rgba(2,8,23,.16);
-  animation: apPop .18s ease;
+  position:relative; z-index:1; width:100%; max-width:400px; margin:0 16px;
+  background:#fff; border-radius:14px; padding:26px 22px 20px;
+  box-shadow:0 16px 48px rgba(2,8,23,.16); animation:apPop .18s ease;
 }
 @keyframes apPop {
-  from { opacity: 0; transform: scale(.96) translateY(6px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity:0; transform:scale(.96) translateY(6px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
 }
 .ap-modal-close {
-  position: absolute;
-  right: 13px;
-  top: 11px;
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: #f1f5f9;
-  border-radius: 7px;
-  color: #64748b;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .15s, color .15s;
+  position:absolute; right:13px; top:11px; width:30px; height:30px;
+  border:none; background:#f1f5f9; border-radius:7px; color:#64748b;
+  font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
-.ap-modal-close:hover { background: #e2e8f0; color: #1a1f2e; }
-.ap-modal-title {
-  font-size: .975rem;
-  font-weight: 700;
-  color: #1a1f2e;
-  margin: 0 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ap-modal-title i { color: #2d8653; }
-.ap-modal-actions { display: flex; flex-direction: column; gap: 9px; }
+.ap-modal-close:hover { background:#e2e8f0; color:#1a1f2e; }
+.ap-modal-title { font-size:.975rem; font-weight:700; color:#1a1f2e; margin:0 0 16px; display:flex; align-items:center; gap:8px; }
+.ap-modal-title i { color:#2d8653; }
+.ap-modal-actions { display:flex; flex-direction:column; gap:9px; }
 .ap-modal-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 9px;
-  font: inherit;
-  font-size: .875rem;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: all .15s;
+  display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px;
+  border-radius:9px; font:inherit; font-size:.875rem; font-weight:700; cursor:pointer; border:none; transition:all .15s;
 }
-.ap-modal-btn.primary {
-  background: linear-gradient(135deg, #2d8653, #1a5c3a);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(45,134,83,.25);
-}
-.ap-modal-btn.primary:hover { opacity: .88; }
-.ap-modal-btn.secondary {
-  background: #f1f5f9;
-  color: #374151;
-  border: 1.5px solid #e2e8f0;
-}
-.ap-modal-btn.secondary:hover { background: #e8edf2; }
+.ap-modal-btn.primary { background:linear-gradient(135deg,#2d8653,#1a5c3a); color:#fff; box-shadow:0 2px 8px rgba(45,134,83,.25); }
+.ap-modal-btn.primary:hover { opacity:.88; }
+.ap-modal-btn.secondary { background:#f1f5f9; color:#374151; border:1.5px solid #e2e8f0; }
+.ap-modal-btn.secondary:hover { background:#e8edf2; }
 
-/* ── Empty org state ──────────────────────────────────── */
-.ap-empty-org {
-  text-align: center;
-  padding: 36px 20px;
-  color: #94a3b8;
-}
-.ap-empty-org i { font-size: 2rem; color: #dde3ea; display: block; margin-bottom: 10px; }
-.ap-empty-org p { font-size: .875rem; margin: 0; }
+/* Empty org */
+.ap-empty-org { text-align:center; padding:36px 20px; color:#94a3b8; }
+.ap-empty-org i { font-size:2rem; color:#dde3ea; display:block; margin-bottom:10px; }
+.ap-empty-org p { font-size:.875rem; margin:0; }
 .ap-empty-org a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 14px;
-  padding: 9px 18px;
-  background: linear-gradient(135deg, #2d8653, #1a5c3a);
-  color: #fff;
-  border-radius: 8px;
-  font-size: .875rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: opacity .15s;
+  display:inline-flex; align-items:center; gap:6px; margin-top:14px;
+  padding:9px 18px; background:linear-gradient(135deg,#2d8653,#1a5c3a); color:#fff;
+  border-radius:8px; font-size:.875rem; font-weight:700; text-decoration:none; transition:opacity .15s;
 }
-.ap-empty-org a:hover { opacity: .88; }
+.ap-empty-org a:hover { opacity:.88; }
 </style>
 
 <div class="ap-page">
 
-  <!-- ── Page Header ──────────────────────────────────── -->
+  <!-- Page Header -->
   <div class="ap-page-header">
-    <h1 class="ap-page-title">
-      <i class="fas fa-user-circle"></i> Admin Profile
-    </h1>
+    <h1 class="ap-page-title"><i class="fas fa-user-circle"></i> Admin Profile</h1>
   </div>
 
-  <!-- ── Alerts ───────────────────────────────────────── -->
-  <?php if (isset($_GET['success'])): ?>
+  <!-- Global Alerts -->
+  <?php if ($org_success): ?>
     <div class="ap-alert ap-alert-success">
       <i class="fas fa-check-circle"></i>
-      <?= match($_GET['success']) {
+      <?= match($org_success) {
         'donation_updated' => 'Organization details saved successfully.',
         'fb_updated'       => 'Facebook link updated.',
         'profile_updated'  => 'Profile photo updated.',
@@ -597,26 +363,42 @@ $organization = $stmt->get_result()->fetch_assoc();
       } ?>
     </div>
   <?php endif; ?>
-  <?php if (isset($_GET['error'])): ?>
+  <?php if ($org_error): ?>
     <div class="ap-alert ap-alert-error">
-      <i class="fas fa-exclamation-circle"></i>
-      Something went wrong — please try again.
+      <i class="fas fa-exclamation-circle"></i> Something went wrong — please try again.
     </div>
   <?php endif; ?>
+  <?php
+    $profile_alert_map = [
+      'success'       => ['success', '<i class="fas fa-check-circle"></i> Profile information updated successfully.'],
+      'empty'         => ['error',   '<i class="fas fa-exclamation-circle"></i> Name and email are required.'],
+      'invalid_email' => ['error',   '<i class="fas fa-exclamation-circle"></i> Please enter a valid email address.'],
+      'db_error'      => ['error',   '<i class="fas fa-exclamation-circle"></i> Database error — please try again.'],
+    ];
+    if (isset($profile_alert_map[$profile_status])):
+      [$pa_type, $pa_msg] = $profile_alert_map[$profile_status];
+  ?>
+    <div class="ap-alert ap-alert-<?= $pa_type ?>"><?= $pa_msg ?></div>
+  <?php endif; ?>
 
-  <!-- ── Two-column layout ────────────────────────────── -->
+  <!-- Two-column layout -->
   <div class="ap-layout">
 
-    <!-- ════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
          LEFT COLUMN
-    ════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════════════ -->
     <div class="ap-left-col">
 
-      <!-- Profile Identity Card -->
+      <!-- Account Card -->
       <div class="ap-card">
         <div class="ap-card-header">
           <h6><i class="fas fa-id-badge"></i> Account</h6>
+          <button type="button" class="ap-btn-edit-profile" id="btnEditProfile"
+                  onclick="toggleProfileEdit(true)">
+            <i class="fas fa-pen"></i> Edit
+          </button>
         </div>
+
         <div class="ap-identity">
           <!-- Avatar -->
           <div class="ap-avatar-ring" onclick="openModal('profileModal')">
@@ -630,23 +412,66 @@ $organization = $stmt->get_result()->fetch_assoc();
             <div class="ap-avatar-overlay"><i class="fas fa-camera"></i></div>
           </div>
 
-          <p class="ap-identity-name"><?= htmlspecialchars($admin['name']) ?></p>
-          <span class="ap-identity-role"><i class="fas fa-shield-alt"></i> Administrator</span>
-
-          <div class="ap-meta-list">
-            <div class="ap-meta-row">
-              <i class="fas fa-envelope"></i>
-              <span><?= htmlspecialchars($admin['email']) ?></span>
-            </div>
-            <div class="ap-meta-row">
-              <i class="fas fa-calendar-check"></i>
-              <span>Member since <?= date('M Y', strtotime($admin['created_at'])) ?></span>
+          <!-- READ-ONLY view -->
+          <div id="profileViewMode">
+            <p class="ap-identity-name"><?= htmlspecialchars($admin['name']) ?></p>
+            <span class="ap-identity-role"><i class="fas fa-shield-alt"></i> Administrator</span>
+            <div class="ap-meta-list">
+              <div class="ap-meta-row">
+                <i class="fas fa-envelope"></i>
+                <span><?= htmlspecialchars($admin['email']) ?></span>
+              </div>
+              <div class="ap-meta-row">
+                <i class="fas fa-calendar-check"></i>
+                <span>Member since <?= date('M Y', strtotime($admin['created_at'])) ?></span>
+              </div>
             </div>
           </div>
-          <button type="button" class="btn btn-outline-primary btn-sm"
-        onclick="openChangePasswordModal()">
-  <i class="fas fa-lock"></i> Change Password
-</button>
+
+          <!-- EDIT form (hidden by default) -->
+          <form method="POST" action="admin_profile.php" id="profileEditForm"
+                style="display:none;width:100%;margin-top:12px;">
+            <input type="hidden" name="update_profile_info" value="1">
+
+            <!-- FIXED: for="admin_name" matches id="admin_name" -->
+            <div class="ap-edit-field">
+              <label for="admin_name">Full Name</label>
+              <input type="text" id="admin_name" name="admin_name"
+                     value="<?= htmlspecialchars($admin['name']) ?>"
+                     required autocomplete="name">
+            </div>
+
+            <!-- FIXED: for="admin_email" matches id="admin_email" -->
+            <div class="ap-edit-field">
+              <label for="admin_email">Email Address</label>
+              <input type="email" id="admin_email" name="admin_email"
+                     value="<?= htmlspecialchars($admin['email']) ?>"
+                     required autocomplete="email">
+            </div>
+
+            <!-- Hidden username for browser password-manager accessibility -->
+            <input type="text" name="_username_hint"
+                   value="<?= htmlspecialchars($admin['email']) ?>"
+                   autocomplete="username" aria-hidden="true" tabindex="-1"
+                   style="display:none;">
+
+            <div class="ap-edit-actions">
+              <button type="submit" class="ap-btn-save-profile">
+                <i class="fas fa-floppy-disk"></i> Save
+              </button>
+              <button type="button" class="ap-btn-cancel-profile"
+                      onclick="toggleProfileEdit(false)">
+                Cancel
+              </button>
+            </div>
+          </form>
+
+          <!-- Change Password (always visible) -->
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                  id="btnChangePassword" onclick="openChangePasswordModal()"
+                  style="margin-top:14px;">
+            <i class="fas fa-lock"></i> Change Password
+          </button>
         </div>
       </div>
 
@@ -681,13 +506,12 @@ $organization = $stmt->get_result()->fetch_assoc();
     </div><!-- /.ap-left-col -->
 
 
-    <!-- ════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
          RIGHT COLUMN
-    ════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════════════ -->
     <div class="ap-right-col">
       <?php if ($organization): ?>
 
-        <!-- Tab Container -->
         <div class="ap-card" style="overflow:visible;">
 
           <!-- Tabs -->
@@ -707,68 +531,105 @@ $organization = $stmt->get_result()->fetch_assoc();
           </div>
 
           <!-- Single form wrapping all tabs -->
-          <form method="POST" action="process_update_donation_info.php" enctype="multipart/form-data">
-            <input type="hidden" name="org_id" value="<?= $organization['id'] ?>">
+          <form method="POST" action="process_update_donation_info.php" enctype="multipart/form-data"
+                id="orgForm">
+            <input type="hidden" name="organization_id" value="<?= $organization['id'] ?>">
 
-            <!-- ── Tab: Basic Info ─────────────────────── -->
+            <!-- ══════════════════════════════════════════
+                 TAB: Basic Info
+            ══════════════════════════════════════════════ -->
             <div id="tab-basic" class="ap-tab-panel active">
               <div class="ap-card-body">
 
                 <div class="ap-section-label">
                   <i class="fas fa-building"></i> Organization Details
                 </div>
+
                 <div class="ap-form-grid">
+
+                  <!-- FIXED: all labels have for= matching input id= -->
                   <div class="ap-fg">
-                    <label>Organization Name <span style="color:#dc2626;">*</span></label>
-                    <input type="text" name="org_name"
+                    <label for="basic_org_name">Organization Name <span style="color:#dc2626;">*</span></label>
+                    <input type="text" id="basic_org_name" name="org_name"
                            value="<?= htmlspecialchars($organization['name'] ?? '') ?>"
-                           required placeholder="e.g. Green Future NGO">
+                           required placeholder="e.g. Green Future NGO"
+                           readonly class="tab-field" data-tab="basic">
                   </div>
+
                   <div class="ap-fg">
-                    <label>Location</label>
-                    <input type="text" name="location"
+                    <label for="basic_location">Location</label>
+                    <input type="text" id="basic_location" name="location"
                            value="<?= htmlspecialchars($organization['location'] ?? '') ?>"
-                           placeholder="City, Province">
+                           placeholder="City, Province"
+                           readonly class="tab-field" data-tab="basic">
                   </div>
+
                   <div class="ap-fg">
-                    <label>Contact Email</label>
-                    <input type="email" name="contact_email"
+                    <label for="basic_contact_email">Contact Email</label>
+                    <input type="email" id="basic_contact_email" name="contact_email"
                            value="<?= htmlspecialchars($organization['contact_email'] ?? '') ?>"
-                           placeholder="org@email.com">
+                           placeholder="org@email.com"
+                           readonly class="tab-field" data-tab="basic">
                   </div>
+
                   <div class="ap-fg">
-                    <label>Contact Phone</label>
-                    <input type="text" name="contact_phone"
+                    <label for="basic_contact_phone">Contact Phone</label>
+                    <input type="text" id="basic_contact_phone" name="contact_phone"
                            value="<?= htmlspecialchars($organization['contact_phone'] ?? '') ?>"
-                           placeholder="+63 9XX XXX XXXX">
+                           placeholder="+63 9XX XXX XXXX"
+                           readonly class="tab-field" data-tab="basic">
                   </div>
+
                   <div class="ap-fg span2">
-                    <label>Description</label>
-                    <textarea name="description" rows="3"
-                              placeholder="Brief description of your organization…"><?= htmlspecialchars($organization['description'] ?? '') ?></textarea>
+                    <label for="basic_description">Description</label>
+                    <textarea id="basic_description" name="description" rows="3"
+                              placeholder="Brief description of your organization…"
+                              readonly class="tab-field" data-tab="basic"><?= htmlspecialchars($organization['description'] ?? '') ?></textarea>
                   </div>
+
                   <div class="ap-fg">
-                    <label>Facebook Page URL</label>
-                    <input type="url" name="facebook_link"
+                    <label for="basic_facebook">Facebook Page URL</label>
+                    <input type="url" id="basic_facebook" name="facebook_link"
                            value="<?= htmlspecialchars($organization['facebook_link'] ?? '') ?>"
-                           placeholder="https://facebook.com/yourpage">
+                           placeholder="https://facebook.com/yourpage"
+                           readonly class="tab-field" data-tab="basic">
                   </div>
-                  <div class="ap-fg">
-                    <label>Organization Logo</label>
-                    <input type="file" name="logo" accept="image/*">
+
+                  <div class="ap-fg" id="basic_logo_field" style="display:none;">
+                    <label for="basic_logo">Organization Logo</label>
+                    <input type="file" id="basic_logo" name="logo" accept="image/*">
                     <span class="ap-fg-hint">JPG, PNG — max 2MB. Replaces current logo.</span>
                   </div>
+
                 </div>
 
                 <div class="ap-save-bar">
-                  <button type="submit" class="ap-btn-save">
-                    <i class="fas fa-floppy-disk"></i> Save Changes
-                  </button>
+                  <div class="ap-locked-hint" id="basic_locked_hint">
+                    <i class="fas fa-lock"></i> Click Edit Info to make changes
+                  </div>
+                  <div class="ap-save-bar-right">
+                    <button type="button" class="ap-btn-edit" id="basic_edit_btn"
+                            onclick="enableTab('basic')">
+                      <i class="fas fa-pen"></i> Edit Info
+                    </button>
+                    <button type="button" class="ap-btn-cancel" id="basic_cancel_btn"
+                            style="display:none;" onclick="cancelTab('basic')">
+                      Cancel
+                    </button>
+                    <button type="submit" class="ap-btn-save" id="basic_save_btn"
+                            style="display:none;" name="submit_tab" value="basic">
+                      <i class="fas fa-floppy-disk"></i> Save Changes
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </div><!-- /tab-basic -->
 
-            <!-- ── Tab: GCash ──────────────────────────── -->
+
+            <!-- ══════════════════════════════════════════
+                 TAB: GCash
+            ══════════════════════════════════════════════ -->
             <div id="tab-gcash" class="ap-tab-panel">
               <div class="ap-card-body">
 
@@ -777,37 +638,35 @@ $organization = $stmt->get_result()->fetch_assoc();
                 </div>
 
                 <div class="ap-pay-grid">
-                  <!-- GCash Info -->
                   <div class="ap-pay-block">
-                    <div class="ap-pay-block-title">
-                      <i class="fas fa-user"></i> Account Info
-                    </div>
+                    <div class="ap-pay-block-title"><i class="fas fa-user"></i> Account Info</div>
+
                     <div class="ap-fg" style="margin-bottom:10px;">
-                      <label>GCash Name <span style="color:#dc2626;">*</span></label>
-                      <input type="text" name="gcash_name"
+                      <label for="gcash_name">GCash Name <span style="color:#dc2626;">*</span></label>
+                      <input type="text" id="gcash_name" name="gcash_name"
                              value="<?= htmlspecialchars($organization['gcash_name'] ?? '') ?>"
                              placeholder="Registered name on GCash"
-                             required>
+                             readonly class="tab-field" data-tab="gcash">
                     </div>
+
                     <div class="ap-fg">
-                      <label>GCash Number <span style="color:#dc2626;">*</span></label>
-                      <input type="text" name="gcash_number"
+                      <label for="gcash_number">GCash Number <span style="color:#dc2626;">*</span></label>
+                      <input type="text" id="gcash_number" name="gcash_number"
                              value="<?= htmlspecialchars($organization['gcash_number'] ?? '') ?>"
                              placeholder="09XX XXX XXXX"
-                             required>
+                             readonly class="tab-field" data-tab="gcash">
                     </div>
                   </div>
 
-                  <!-- GCash QR -->
                   <div class="ap-pay-block">
-                    <div class="ap-pay-block-title">
-                      <i class="fas fa-qrcode"></i> QR Code
-                    </div>
-                    <div class="ap-fg">
-                      <label>Upload QR Image</label>
-                      <input type="file" name="gcash_qr" accept="image/*">
+                    <div class="ap-pay-block-title"><i class="fas fa-qrcode"></i> QR Code</div>
+
+                    <div class="ap-fg" id="gcash_qr_field" style="display:none;">
+                      <label for="gcash_qr">Upload QR Image</label>
+                      <input type="file" id="gcash_qr" name="gcash_qr" accept="image/*">
                       <span class="ap-fg-hint">PNG or JPG — shown to donors at checkout.</span>
                     </div>
+
                     <?php if (!empty($organization['gcash_qr'])): ?>
                       <div class="ap-qr-row">
                         <img src="../uploads/<?= htmlspecialchars($organization['gcash_qr']) ?>"
@@ -817,20 +676,38 @@ $organization = $stmt->get_result()->fetch_assoc();
                         </span>
                       </div>
                     <?php else: ?>
-                      <p style="font-size:.78rem;color:#94a3b8;margin:10px 0 0;">No QR uploaded yet.</p>
+                      <p style="font-size:.78rem;color:#94a3b8;margin:10px 0 0;" id="gcash_no_qr">No QR uploaded yet.</p>
                     <?php endif; ?>
                   </div>
                 </div>
 
                 <div class="ap-save-bar">
-                  <button type="submit" class="ap-btn-save">
-                    <i class="fas fa-floppy-disk"></i> Save GCash Details
-                  </button>
+                  <div class="ap-locked-hint" id="gcash_locked_hint">
+                    <i class="fas fa-lock"></i> Click Edit Info to make changes
+                  </div>
+                  <div class="ap-save-bar-right">
+                    <button type="button" class="ap-btn-edit" id="gcash_edit_btn"
+                            onclick="enableTab('gcash')">
+                      <i class="fas fa-pen"></i> Edit Info
+                    </button>
+                    <button type="button" class="ap-btn-cancel" id="gcash_cancel_btn"
+                            style="display:none;" onclick="cancelTab('gcash')">
+                      Cancel
+                    </button>
+                    <button type="submit" class="ap-btn-save" id="gcash_save_btn"
+                            style="display:none;" name="submit_tab" value="gcash">
+                      <i class="fas fa-floppy-disk"></i> Save GCash Details
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </div><!-- /tab-gcash -->
 
-            <!-- ── Tab: Bank ───────────────────────────── -->
+
+            <!-- ══════════════════════════════════════════
+                 TAB: Bank
+            ══════════════════════════════════════════════ -->
             <div id="tab-bank" class="ap-tab-panel">
               <div class="ap-card-body">
 
@@ -840,32 +717,37 @@ $organization = $stmt->get_result()->fetch_assoc();
 
                 <div class="ap-pay-grid">
                   <div class="ap-pay-block">
-                    <div class="ap-pay-block-title">
-                      <i class="fas fa-university"></i> Bank Account
-                    </div>
+                    <div class="ap-pay-block-title"><i class="fas fa-university"></i> Bank Account</div>
+
                     <div class="ap-fg" style="margin-bottom:10px;">
-                      <label>Bank Name</label>
-                      <input type="text" name="bank_name"
+                      <label for="bank_name">Bank Name</label>
+                      <input type="text" id="bank_name" name="bank_name"
                              value="<?= htmlspecialchars($organization['bank_name'] ?? '') ?>"
-                             placeholder="e.g. BDO, BPI, Metrobank">
+                             placeholder="e.g. BDO, BPI, Metrobank"
+                             readonly class="tab-field" data-tab="bank">
                     </div>
+
                     <div class="ap-fg" style="margin-bottom:10px;">
-                      <label>Account Name</label>
-                      <input type="text" name="bank_account_name"
+                      <label for="bank_account_name">Account Name</label>
+                      <input type="text" id="bank_account_name" name="bank_account_name"
                              value="<?= htmlspecialchars($organization['bank_account_name'] ?? '') ?>"
-                             placeholder="Name registered on the account">
+                             placeholder="Name registered on the account"
+                             readonly class="tab-field" data-tab="bank">
                     </div>
+
                     <div class="ap-fg">
-                      <label>Account Number</label>
-                      <input type="text" name="bank_account_number"
+                      <label for="bank_account_number">Account Number</label>
+                      <input type="text" id="bank_account_number" name="bank_account_number"
                              value="<?= htmlspecialchars($organization['bank_account_number'] ?? '') ?>"
-                             placeholder="e.g. 0012 3456 7890">
+                             placeholder="e.g. 0012 3456 7890"
+                             readonly class="tab-field" data-tab="bank">
                       <span class="ap-fg-hint">Double-check for accuracy — donors will use this to transfer.</span>
                     </div>
                   </div>
 
-                  <!-- Info panel -->
-                  <div class="ap-pay-block" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#bfdbfe;">
+                  <div class="ap-pay-block" style="display:flex;flex-direction:column;align-items:center;
+                       justify-content:center;text-align:center;gap:10px;
+                       background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#bfdbfe;">
                     <i class="fas fa-university" style="font-size:2rem;color:#93c5fd;"></i>
                     <p style="font-size:.78rem;color:#1d4ed8;font-weight:600;margin:0;line-height:1.55;">
                       These details appear on the<br>
@@ -876,14 +758,32 @@ $organization = $stmt->get_result()->fetch_assoc();
                 </div>
 
                 <div class="ap-save-bar">
-                  <button type="submit" class="ap-btn-save">
-                    <i class="fas fa-floppy-disk"></i> Save Bank Details
-                  </button>
+                  <div class="ap-locked-hint" id="bank_locked_hint">
+                    <i class="fas fa-lock"></i> Click Edit Info to make changes
+                  </div>
+                  <div class="ap-save-bar-right">
+                    <button type="button" class="ap-btn-edit" id="bank_edit_btn"
+                            onclick="enableTab('bank')">
+                      <i class="fas fa-pen"></i> Edit Info
+                    </button>
+                    <button type="button" class="ap-btn-cancel" id="bank_cancel_btn"
+                            style="display:none;" onclick="cancelTab('bank')">
+                      Cancel
+                    </button>
+                    <button type="submit" class="ap-btn-save" id="bank_save_btn"
+                            style="display:none;" name="submit_tab" value="bank">
+                      <i class="fas fa-floppy-disk"></i> Save Bank Details
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </div><!-- /tab-bank -->
 
-            <!-- ── Tab: Drop-off ───────────────────────── -->
+
+            <!-- ══════════════════════════════════════════
+                 TAB: Drop-off
+            ══════════════════════════════════════════════ -->
             <div id="tab-dropoff" class="ap-tab-panel">
               <div class="ap-card-body">
 
@@ -893,29 +793,47 @@ $organization = $stmt->get_result()->fetch_assoc();
 
                 <div class="ap-form-grid">
                   <div class="ap-fg span2">
-                    <label>Drop-off Location</label>
-                    <input type="text" name="dropoff_location"
+                    <label for="dropoff_location">Drop-off Location</label>
+                    <input type="text" id="dropoff_location" name="dropoff_location"
                            value="<?= htmlspecialchars($organization['dropoff_location'] ?? '') ?>"
-                           placeholder="e.g. 123 Main St, Building A, Room 5">
+                           placeholder="e.g. 123 Main St, Building A, Room 5"
+                           readonly class="tab-field" data-tab="dropoff">
                   </div>
+
                   <div class="ap-fg span2">
-                    <label>Instructions for Donors</label>
-                    <textarea name="dropoff_instructions" rows="4"
-                              placeholder="Hours, contact person, accepted items, schedule…"><?= htmlspecialchars($organization['dropoff_instructions'] ?? '') ?></textarea>
+                    <label for="dropoff_instructions">Instructions for Donors</label>
+                    <textarea id="dropoff_instructions" name="dropoff_instructions" rows="4"
+                              placeholder="Hours, contact person, accepted items, schedule…"
+                              readonly class="tab-field" data-tab="dropoff"><?= htmlspecialchars($organization['dropoff_instructions'] ?? '') ?></textarea>
                     <span class="ap-fg-hint">This text is shown to donors when they choose the drop-off donation method.</span>
                   </div>
                 </div>
 
                 <div class="ap-save-bar">
-                  <button type="submit" class="ap-btn-save">
-                    <i class="fas fa-floppy-disk"></i> Save Drop-off Info
-                  </button>
+                  <div class="ap-locked-hint" id="dropoff_locked_hint">
+                    <i class="fas fa-lock"></i> Click Edit Info to make changes
+                  </div>
+                  <div class="ap-save-bar-right">
+                    <button type="button" class="ap-btn-edit" id="dropoff_edit_btn"
+                            onclick="enableTab('dropoff')">
+                      <i class="fas fa-pen"></i> Edit Info
+                    </button>
+                    <button type="button" class="ap-btn-cancel" id="dropoff_cancel_btn"
+                            style="display:none;" onclick="cancelTab('dropoff')">
+                      Cancel
+                    </button>
+                    <button type="submit" class="ap-btn-save" id="dropoff_save_btn"
+                            style="display:none;" name="submit_tab" value="dropoff">
+                      <i class="fas fa-floppy-disk"></i> Save Drop-off Info
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </div><!-- /tab-dropoff -->
 
           </form>
-        </div><!-- /.ap-card (tab container) -->
+        </div><!-- /.ap-card -->
 
       <?php else: ?>
         <div class="ap-card">
@@ -930,19 +848,15 @@ $organization = $stmt->get_result()->fetch_assoc();
       <?php endif; ?>
 
     </div><!-- /.ap-right-col -->
-
   </div><!-- /.ap-layout -->
-
 </div><!-- /.ap-page -->
 
 
-<!-- ── Modal: Change Profile Photo ──────────────────────── -->
+<!-- Modal: Change Profile Photo -->
 <div id="profileModal" class="ap-modal">
   <div class="ap-modal-backdrop" onclick="closeModal('profileModal')"></div>
   <div class="ap-modal-box">
-    <button class="ap-modal-close" onclick="closeModal('profileModal')">
-      <i class="fas fa-times"></i>
-    </button>
+    <button class="ap-modal-close" onclick="closeModal('profileModal')"><i class="fas fa-times"></i></button>
     <p class="ap-modal-title"><i class="fas fa-camera"></i> Change Profile Photo</p>
     <div class="ap-modal-actions">
       <button class="ap-modal-btn primary" onclick="document.getElementById('profileInput').click()">
@@ -963,14 +877,12 @@ $organization = $stmt->get_result()->fetch_assoc();
   </div>
 </div>
 
-<!-- ── Modal: Change Organization Logo ──────────────────── -->
+<!-- Modal: Change Organization Logo -->
 <?php if ($organization): ?>
 <div id="logoModal" class="ap-modal">
   <div class="ap-modal-backdrop" onclick="closeModal('logoModal')"></div>
   <div class="ap-modal-box">
-    <button class="ap-modal-close" onclick="closeModal('logoModal')">
-      <i class="fas fa-times"></i>
-    </button>
+    <button class="ap-modal-close" onclick="closeModal('logoModal')"><i class="fas fa-times"></i></button>
     <p class="ap-modal-title"><i class="fas fa-image"></i> Change Organization Logo</p>
     <div class="ap-modal-actions">
       <button class="ap-modal-btn primary" onclick="document.getElementById('logoInput').click()">
@@ -984,19 +896,92 @@ $organization = $stmt->get_result()->fetch_assoc();
       <?php endif; ?>
     </div>
     <form method="POST" action="process_update_donation_info.php" enctype="multipart/form-data" id="logoUploadForm">
-      <input type="hidden" name="org_id" value="<?= $organization['id'] ?>">
+      <input type="hidden" name="organization_id" value="<?= $organization['id'] ?>">
       <input type="file" name="logo" id="logoInput" accept="image/*"
              style="display:none;" onchange="document.getElementById('logoUploadForm').submit()">
     </form>
   </div>
 </div>
 <?php endif; ?>
+
 <?php
   $pw_action = 'admin_change_password.php';
   include '../includes/change_password_modal.php';
 ?>
+
 <script>
-// ── Modal open/close
+/* ── Stored original values for cancel ──────────────── */
+const _origValues = {};
+
+document.querySelectorAll('.tab-field').forEach(function(el) {
+  const key = el.id;
+  _origValues[key] = el.tagName === 'TEXTAREA' ? el.value : el.value;
+});
+
+/* ── Enable editing for a tab ─────────────────────── */
+function enableTab(tab) {
+  // Unlock fields for this tab
+  document.querySelectorAll('.tab-field[data-tab="' + tab + '"]').forEach(function(el) {
+    el.removeAttribute('readonly');
+    el.style.background = '';
+    el.style.color = '';
+    el.style.cursor = '';
+  });
+
+  // Show file upload fields if applicable
+  var fileField = document.getElementById(tab + '_logo_field') ||
+                  document.getElementById(tab + '_qr_field');
+  if (fileField) fileField.style.display = '';
+
+  // Swap buttons
+  document.getElementById(tab + '_edit_btn').style.display   = 'none';
+  document.getElementById(tab + '_cancel_btn').style.display = '';
+  document.getElementById(tab + '_save_btn').style.display   = '';
+  document.getElementById(tab + '_locked_hint').style.display = 'none';
+}
+
+/* ── Cancel editing for a tab ─────────────────────── */
+function cancelTab(tab) {
+  // Restore original values and re-lock
+  document.querySelectorAll('.tab-field[data-tab="' + tab + '"]').forEach(function(el) {
+    el.value = _origValues[el.id] || '';
+    el.setAttribute('readonly', true);
+  });
+
+  // Hide file upload fields
+  var fileField = document.getElementById(tab + '_logo_field') ||
+                  document.getElementById(tab + '_qr_field');
+  if (fileField) fileField.style.display = 'none';
+
+  // Swap buttons back
+  document.getElementById(tab + '_edit_btn').style.display   = '';
+  document.getElementById(tab + '_cancel_btn').style.display = 'none';
+  document.getElementById(tab + '_save_btn').style.display   = 'none';
+  document.getElementById(tab + '_locked_hint').style.display = '';
+}
+
+/* ── Tab switching ────────────────────────────────── */
+function switchTab(btn, panelId) {
+  btn.closest('.ap-tabs').querySelectorAll('.ap-tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.closest('.ap-card').querySelectorAll('.ap-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+/* ── Restore active tab from URL hash ─────────────── */
+(function() {
+  const hash = window.location.hash;
+  if (hash) {
+    const tabs = ['tab-basic','tab-gcash','tab-bank','tab-dropoff'];
+    const idx  = tabs.indexOf(hash.slice(1));
+    if (idx >= 0) {
+      const btns = document.querySelectorAll('.ap-tab');
+      if (btns[idx]) switchTab(btns[idx], tabs[idx]);
+    }
+  }
+})();
+
+/* ── Modal open/close ─────────────────────────────── */
 function openModal(id) {
   document.getElementById(id).classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -1005,39 +990,20 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('show');
   document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    document.querySelectorAll('.ap-modal.show').forEach(m => {
-      m.classList.remove('show');
-    });
+    document.querySelectorAll('.ap-modal.show').forEach(function(m) { m.classList.remove('show'); });
     document.body.style.overflow = '';
   }
 });
 
-// ── Tab switching
-function switchTab(btn, panelId) {
-  // Deactivate all tabs + panels
-  btn.closest('.ap-tabs').querySelectorAll('.ap-tab').forEach(t => t.classList.remove('active'));
-  btn.closest('.ap-card').querySelectorAll('.ap-tab-panel').forEach(p => p.classList.remove('active'));
-  // Activate selected
-  btn.classList.add('active');
-  document.getElementById(panelId).classList.add('active');
+/* ── Profile Edit toggle (left card) ─────────────── */
+function toggleProfileEdit(editing) {
+  document.getElementById('profileViewMode').style.display    = editing ? 'none' : '';
+  document.getElementById('profileEditForm').style.display    = editing ? 'block' : 'none';
+  document.getElementById('btnEditProfile').style.display     = editing ? 'none' : '';
+  document.getElementById('btnChangePassword').style.display  = editing ? 'none' : '';
 }
-
-// ── Restore active tab from URL hash (e.g. #tab-gcash)
-(function() {
-  const hash = window.location.hash;
-  if (hash) {
-    const panel = document.getElementById(hash.slice(1));
-    if (panel && panel.classList.contains('ap-tab-panel')) {
-      const idx = ['tab-basic','tab-gcash','tab-bank','tab-dropoff'].indexOf(hash.slice(1));
-      if (idx >= 0) {
-        const tabs = document.querySelectorAll('.ap-tab');
-        if (tabs[idx]) switchTab(tabs[idx], hash.slice(1));
-      }
-    }
-  }
-})();
 </script>
 
 <?php include '../includes/footer.php'; ?>

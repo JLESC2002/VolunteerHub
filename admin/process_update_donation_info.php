@@ -4,16 +4,29 @@ include '../conn.php';
 include './check_session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $org_id = intval($_POST['organization_id']);
+    $org_id = intval($_POST['organization_id'] ?? 0);
+
+    // Validate org_id
+    if ($org_id <= 0) {
+        header("Location: admin_profile.php?error=invalid_org");
+        exit;
+    }
+
+    // Basic Info fields
+    $org_name = trim($_POST['org_name'] ?? '');
+    $location = trim($_POST['location'] ?? '');
+    $contact_email = trim($_POST['contact_email'] ?? '');
+    $contact_phone = trim($_POST['contact_phone'] ?? '');
+    $description = trim($_POST['description'] ?? '');
 
     // Existing fields
-    $gcash_name = trim($_POST['gcash_name']);
-    $gcash_number = trim($_POST['gcash_number']);
-    $bank_name = trim($_POST['bank_name']);
-    $bank_account_name = trim($_POST['bank_account_name']);
-    $bank_account_number = trim($_POST['bank_account_number']);
-    $dropoff_location = trim($_POST['dropoff_location']);
-    $dropoff_instructions = trim($_POST['dropoff_instructions']);
+    $gcash_name = trim($_POST['gcash_name'] ?? '');
+    $gcash_number = trim($_POST['gcash_number'] ?? '');
+    $bank_name = trim($_POST['bank_name'] ?? '');
+    $bank_account_name = trim($_POST['bank_account_name'] ?? '');
+    $bank_account_number = trim($_POST['bank_account_number'] ?? '');
+    $dropoff_location = trim($_POST['dropoff_location'] ?? '');
+    $dropoff_instructions = trim($_POST['dropoff_instructions'] ?? '');
 
     // NEW: facebook link
     $facebook_link = trim($_POST['facebook_link'] ?? '');
@@ -77,6 +90,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fields = [];
     $types  = "";
     $values = [];
+
+    // Basic info fields (always update if provided)
+    if ($org_name) {
+        $fields[] = "name = ?";
+        $types .= "s";
+        $values[] = $org_name;
+    }
+
+    if ($location !== '') {
+        $fields[] = "location = ?";
+        $types .= "s";
+        $values[] = $location;
+    }
+
+    if ($contact_email !== '') {
+        $fields[] = "contact_email = ?";
+        $types .= "s";
+        $values[] = $contact_email;
+    }
+
+    if ($contact_phone !== '') {
+        $fields[] = "contact_phone = ?";
+        $types .= "s";
+        $values[] = $contact_phone;
+    }
+
+    if ($description !== '') {
+        $fields[] = "description = ?";
+        $types .= "s";
+        $values[] = $description;
+    }
 
     // always update donation fields (existing)
     $fields[] = "gcash_name = ?";
